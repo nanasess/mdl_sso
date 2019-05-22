@@ -3,10 +3,11 @@
     "description": "OpenID Connect Client for EC-CUBE2",
     "type": "library",
     "require": {
+        "php": ">=5.4.16",
         "composer/ca-bundle": "^1.1",
         "guzzlehttp/guzzle": "^5.3"
     },
-    "license": "LGPL",
+    "license": "LGPL-2.1-or-later",
     "authors": [
         {
             "name": "Kentaro Ohkouchi",
