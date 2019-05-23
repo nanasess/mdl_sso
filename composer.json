@@ -15,9 +15,6 @@
         }
     ],
     "config": {
-        "platform": {
-            "php": "5.4"
-        },
         "optimize-autoloader": true,
         "sort-packages": true
     },
