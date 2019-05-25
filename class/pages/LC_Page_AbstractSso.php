@@ -5,7 +5,7 @@ abstract class LC_Page_AbstractSso extends LC_Page_Ex
     /**
      * @var string
      */
-    protected $sort_name;
+    protected $short_name;
 
     /**
      * @var array

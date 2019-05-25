@@ -22,7 +22,7 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
     {
         parent::init();
 
-        if (!$this->httpClient) {
+        if (!is_object($this->httpClient)) {
             $this->httpClient = new GuzzleHttp\Client([
                 'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()
             ]);
