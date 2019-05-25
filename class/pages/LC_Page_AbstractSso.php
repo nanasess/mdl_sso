@@ -2,15 +2,13 @@
 
 abstract class LC_Page_AbstractSso extends LC_Page_Ex
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $short_name;
-
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $arrClient;
+
+    /** @var array */
+    protected $vars;
 
     /**
      * Page を初期化する.
@@ -20,7 +18,7 @@ abstract class LC_Page_AbstractSso extends LC_Page_Ex
     public function init()
     {
         parent::init();
-        $this->short_name = htmlspecialchars($_GET['short_name'], ENT_QUOTES);
+        $this->short_name = htmlspecialchars($this->vars['short_name'], ENT_QUOTES);
         $this->httpCacheControl('nocache');
     }
 
@@ -49,5 +47,10 @@ abstract class LC_Page_AbstractSso extends LC_Page_Ex
             SC_Utils_Ex::sfDispSiteError(FREE_ERROR_MSG, '', false, $error.': '.$error_description);
             SC_Response_Ex::actionExit();
         }
+    }
+
+    public function setVars(array $vars)
+    {
+        $this->vars = $vars;
     }
 }

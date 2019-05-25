@@ -38,13 +38,13 @@ class SC_Helper_OAuth2
      */
     public static function getRedirectUri($short_name)
     {
-        return HTTPS_URL.'sso/callback.php?short_name='.$short_name;
+        return HTTPS_URL.'sso/'.$short_name.'/redirect';
     }
 
     /**
      * Authorization Request URI を返します.
      *
-     * @param string $short_name
+     * @param OAuth2Client $objClient
      * @param string $state
      * @return string
      */
@@ -115,7 +115,7 @@ class SC_Helper_OAuth2
      *
      * @param GuzzleHttp\Client $httpClient
      * @param OAuth2Client $objClient
-     * @param string $accss_token
+     * @param string $access_token
      * @return array
      */
     public static function getUserInfo(GuzzleHttp\Client $httpClient, OAuth2Client $objClient, $access_token)
