@@ -141,6 +141,7 @@ class SC_Helper_OAuth2
 
     public static function registerUserInfo(array $arrUserInfo)
     {
-        
+        $arrUserInfo['updated_at'] = new DateTime();
+        return $arrUserInfo;
     }
 }
