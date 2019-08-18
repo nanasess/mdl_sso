@@ -58,6 +58,7 @@ before_script:
   - cd eccube-2_13
   - composer self-update || true
   - composer config repositories.nanasess/mdl_sso path ../mdl_sso
+  - COMPOSER_MEMORY_LIMIT=-1 composer --ignore-platform-reqs require  guzzlehttp/guzzle "^6.3"
   - COMPOSER_MEMORY_LIMIT=-1 composer --ignore-platform-reqs require nanasess/mdl_sso "*@dev"
   - composer --ignore-platform-reqs install --dev --no-interaction -o --apcu-autoloader
   - sh -c "if [ '$DB' = 'mysql' ]; then sh ./eccube_install.sh mysql; fi"
