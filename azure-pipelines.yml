@@ -9,6 +9,15 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  DBNAME: myapp_test
+  HTTP_URL: http://localhost:8085/
+  HTTPS_URL: http://localhost:8085/
+  DB: mysql
+  USER: root
+  DBPASS: password
+  DBUSER: root
+
 strategy:
     matrix:
       php_72_x:
