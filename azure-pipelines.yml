@@ -26,9 +26,14 @@ steps:
     cd ../
     git clone https://github.com/EC-CUBE/eccube-2_13.git
     cd eccube-2_13
+    composer install --no-interaction --prefer-dist
   displayName: "clone to eccube"
 
 - script: composer install --no-interaction --prefer-dist
   displayName: 'composer install'
 - script: pwd
   displayName: 'pwd'
+- script: ls -al
+  displayName: 'ls -al'
+- script: ls -al ../
+  displayName: 'ls -al ../'
