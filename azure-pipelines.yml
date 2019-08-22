@@ -3,6 +3,8 @@
 # Add steps that run tests, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/php
 
+# see also https://gist.github.com/zanechua/a67ed1de1fff20639edb121bdb0b6e4d
+
 trigger:
 - master
 
@@ -58,5 +60,10 @@ steps:
 
 - script: cat ../eccube-2_13/data/config/config.php
   displayName: 'display to config.php'
+- script: |
+    cd ../eccube-2_13
+    php --version
+    php data/vendor/bin/phpunit --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
+  displayName: 'Run to PHPUnit'
 
 
