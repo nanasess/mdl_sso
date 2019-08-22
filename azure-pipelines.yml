@@ -12,6 +12,13 @@ pool:
 variables:
   phpVersion: 7.2
 
+strategy:
+    matrix:
+      php_72_x:
+        php_version: 7.2.x
+      php_71_x:
+        php_version: 7.1.x
+
 steps:
 - script: |
     sudo update-alternatives --set php /usr/bin/php$(phpVersion)
@@ -41,8 +48,7 @@ steps:
     ./eccube_install.sh mysql
   displayName: "clone to eccube"
 
-- script: cat ../ec-cube/data/config/config.php
+- script: cat ../eccube-2_13/data/config/config.php
   displayName: 'display to config.php'
-- script: composer install --no-interaction --prefer-dist
-  displayName: 'composer install'
+
 
