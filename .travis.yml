@@ -79,7 +79,7 @@ script:
   - mkdir -p reports/coverage
   - if [ ! $COVERAGE ] ; then php data/vendor/bin/phpunit --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests ; fi
 #  - if [ $COVERAGE ] ; then phpdbg -qrr data/vendor/bin/phpunit -c data/vendor/nanasess/phpunit.xml.dist ; fi
-  - if [ ! $COVERAGE ] ; then php data/vendor/bin/codecept run --env chrome --steps ; fi
+  - if [ ! $COVERAGE ] ; then php data/vendor/bin/codecept run -c data/vendor/nanasess/mdl_sso/codeception.yml --env chrome --steps acceptance ; fi
 
 after_script:
   - if [ $COVERAGE ] ; then php data/vendor/bin/coveralls -v ; fi
