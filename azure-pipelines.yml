@@ -23,17 +23,26 @@ steps:
   displayName: 'Use PHP version $(phpVersion)'
 
 - script: |
+    sudo apt-get install -y build-essential debconf-utils screen mysql-server google-chrome-stable
+    sudo apt-get install -y unzip xvfb autogen autoconf libtool pkg-config nasm
+    sudo mysql -uroot -proot -e "use mysql; update user set authentication_string=PASSWORD('password') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
+    sudo mysql -u root -ppassword -e 'create database eccube_db;'
+  displayName: 'Installing System Dependencies'
+
+- script: |
     cd ../
     git clone https://github.com/EC-CUBE/eccube-2_13.git
     cd eccube-2_13
-    composer install --no-interaction --prefer-dist
+    composer self-update || true
+    composer config repositories.nanasess/mdl_sso path $(Build.SourcesDirectory)
+    composer --ignore-platform-reqs require  guzzlehttp/guzzle "^6.3"
+    composer --ignore-platform-reqs require nanasess/mdl_sso "*@dev"
+    composer --ignore-platform-reqs install --no-interaction --prefer-dist
+    ./eccube_install.sh mysql
   displayName: "clone to eccube"
 
+- script: cat ../ec-cube/data/config/config.php
+  displayName: 'display to config.php'
 - script: composer install --no-interaction --prefer-dist
   displayName: 'composer install'
-- script: pwd
-  displayName: 'pwd'
-- script: ls -al
-  displayName: 'ls -al'
-- script: ls -al ../
-  displayName: 'ls -al ../'
+
