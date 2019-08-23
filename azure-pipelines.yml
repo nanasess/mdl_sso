@@ -32,6 +32,15 @@ strategy:
         phpVersion: 5.6
 
 steps:
+
+- script: ls -al $(Agent.HomeDirectory)
+  displayName: 'check Agent.HomeDirectory'
+- script: echo $(Agent.HomeDirectory)
+  displayName: 'echo Agent.HomeDirectory'
+- script: ls -al /home/vsts
+  displayName: 'check to HomeDirectory'
+- script: env
+  displayName: 'check to env'
 - script: |
     sudo update-alternatives --set php /usr/bin/php$(phpVersion)
     sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
@@ -55,7 +64,7 @@ steps:
 - task: CacheBeta@0
   inputs:
     key: '$(Build.SourcesDirectory)/../eccube-2_13/composer.lock'
-    path: '$(Agent.HomeDirectory)/.composer/cache'
+    path: '/home/vsts/.composer/cache'
   displayName: 'Caching to composer'
 
 - script: |
