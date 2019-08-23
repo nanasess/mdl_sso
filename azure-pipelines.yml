@@ -1,0 +1,84 @@
+# PHP
+# Test and package your PHP project.
+# Add steps that run tests, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/php
+
+# see also https://gist.github.com/zanechua/a67ed1de1fff20639edb121bdb0b6e4d
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  DBNAME: myapp_test
+  HTTP_URL: http://localhost:8085/
+  HTTPS_URL: http://localhost:8085/
+  DB: mysql
+  USER: root
+  DBPASS: password
+  DBUSER: root
+
+strategy:
+    matrix:
+      php_73_x:
+        phpVersion: 7.3
+      php_72_x:
+        phpVersion: 7.2
+      php_71_x:
+        phpVersion: 7.1
+      php_56_x:
+        phpVersion: 5.6
+
+steps:
+
+- script: |
+    sudo update-alternatives --set php /usr/bin/php$(phpVersion)
+    sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
+    sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
+    sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
+    sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
+    php -version
+  displayName: 'Use PHP version $(phpVersion)'
+
+- script: |
+    sudo apt-get install -y build-essential debconf-utils screen mysql-server google-chrome-stable
+    sudo apt-get install -y unzip xvfb autogen autoconf libtool pkg-config nasm
+    sudo mysql -uroot -proot -e "use mysql; update user set authentication_string=PASSWORD('password') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
+    sudo mysql -u root -ppassword -e 'create database eccube_db;'
+  displayName: 'Installing System Dependencies'
+
+- script: |
+    cd ../
+    git clone https://github.com/EC-CUBE/eccube-2_13.git
+  displayName: 'Clone to eccube'
+- task: CacheBeta@0
+  inputs:
+    key: '$(Build.SourcesDirectory)/../eccube-2_13/composer.lock'
+    path: '/home/vsts/.composer/cache'
+  displayName: 'Caching to composer'
+
+- script: |
+    cd ../eccube-2_13
+    composer self-update || true
+    composer config repositories.nanasess/mdl_sso path $(Build.SourcesDirectory)
+    composer --ignore-platform-reqs require  guzzlehttp/guzzle "^6.3"
+    composer --ignore-platform-reqs require nanasess/mdl_sso "*@dev"
+    composer --ignore-platform-reqs install --no-interaction --prefer-dist
+    ./eccube_install.sh mysql
+  displayName: "Setup to eccube"
+
+- script: cat ../eccube-2_13/data/config/config.php
+  displayName: 'display to config.php'
+- script: |
+    cd ../eccube-2_13
+    php --version
+    php data/vendor/bin/phpunit --log-junit $(Build.SourcesDirectory)/tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
+  displayName: 'Run to PHPUnit'
+
+# Publish Test Results to Azure Pipelines/TFS
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'

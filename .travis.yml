@@ -26,7 +26,7 @@ env:
     matrix:
         - DB=mysql USER=root DBPASS=' ' DBUSER=root
         - DB=pgsql USER=postgres DBPASS=password DBUSER=postgres
-        - DB=pgsql USER=postgres DBPASS=password DBUSER=postgres COVERAGE=true # Use for coverage report
+#        - DB=pgsql USER=postgres DBPASS=password DBUSER=postgres COVERAGE=true # Use for coverage report
 
 matrix:
   fast_finish: true
@@ -58,9 +58,9 @@ before_script:
   - cd eccube-2_13
   - composer self-update || true
   - composer config repositories.nanasess/mdl_sso path ../mdl_sso
+  - COMPOSER_MEMORY_LIMIT=-1 composer --ignore-platform-reqs require  guzzlehttp/guzzle "^6.3"
   - COMPOSER_MEMORY_LIMIT=-1 composer --ignore-platform-reqs require nanasess/mdl_sso "*@dev"
   - composer --ignore-platform-reqs install --dev --no-interaction -o --apcu-autoloader
-  - cat composer.json
   - sh -c "if [ '$DB' = 'mysql' ]; then sh ./eccube_install.sh mysql; fi"
   - sh -c "if [ '$DB' = 'pgsql' ]; then sh ./eccube_install.sh appveyor; fi"
   - cat ./data/config/config.php
@@ -77,9 +77,9 @@ before_script:
 
 script:
   - mkdir -p reports/coverage
-  - if [ ! $COVERAGE ] ; then php data/vendor/bin/phpunit -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist ; fi
-  - if [ $COVERAGE ] ; then phpdbg -qrr data/vendor/bin/phpunit -c data/vendor/nanasess/phpunit.xml.dist ; fi
-  - if [ ! $COVERAGE ] ; then php data/vendor/bin/codecept run --env chrome --steps ; fi
+  - if [ ! $COVERAGE ] ; then php data/vendor/bin/phpunit --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests ; fi
+#  - if [ $COVERAGE ] ; then phpdbg -qrr data/vendor/bin/phpunit -c data/vendor/nanasess/phpunit.xml.dist ; fi
+  - if [ ! $COVERAGE ] ; then php data/vendor/bin/codecept run -c data/vendor/nanasess/mdl_sso/codeception.yml --env chrome --steps acceptance ; fi
 
 after_script:
   - if [ $COVERAGE ] ; then php data/vendor/bin/coveralls -v ; fi

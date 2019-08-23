@@ -5,6 +5,7 @@ class AuthorizationCodeFlowCest
 {
     public function _before(AcceptanceTester $I)
     {
+        $I->getScenario()->incomplete('Not implemented');
     }
 
     public function _after(AcceptanceTester $I)
