@@ -63,7 +63,18 @@ steps:
 - script: |
     cd ../eccube-2_13
     php --version
-    php data/vendor/bin/phpunit --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
+    php data/vendor/bin/phpunit --log-junit tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
   displayName: 'Run to PHPUnit'
 
-
+# Publish Test Results to Azure Pipelines/TFS
+- task: PublishTestResults@2
+  inputs:
+  testRunner: 'JUnit' # Options: JUnit, NUnit, VSTest, xUnit
+  testResultsFiles: '**/TEST-*.xml'
+  searchFolder: '$(System.DefaultWorkingDirectory)/tests' # Optional
+  mergeTestResults: false # Optional
+  #testRunTitle: # Optional
+  #buildPlatform: # Optional
+  #buildConfiguration: # Optional
+  #publishRunAttachments: true # Optional
+  condition: always()
