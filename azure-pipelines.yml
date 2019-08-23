@@ -54,7 +54,7 @@ steps:
   displayName: 'Clone to eccube'
 - task: CacheBeta@0
   inputs:
-    key: '$(Build.SourcesDirectory)/../eccube-2_13/package-lock.json'
+    key: '$(Build.SourcesDirectory)/../eccube-2_13/composer.lock'
     path: '$(Pipeline.Workspace)/.composer/cache'
   displayName: 'Caching to composer'
 
