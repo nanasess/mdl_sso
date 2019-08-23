@@ -11,6 +11,7 @@ class SC_Helper_OAuth2Test extends Common_TestCase
 
     protected function setUp()
     {
+        $this->markTestIncomplete('Not implemented');
         parent::setUp();
         $arrClient = [
             'oauth2_client_id' => PHP_INT_SIZE,

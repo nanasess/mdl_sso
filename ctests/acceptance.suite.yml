@@ -9,7 +9,7 @@ modules:
     enabled:
         - AcceptanceHelper
         - WebDriver
-        - MailCatcherGuzzle5
+        - MailCatcher
     config:
         PhpBrowser:
             url: 'http://localhost:8085/'
@@ -23,7 +23,7 @@ modules:
             capabilities:
                 unexpectedAlertBehaviour: 'accept'
                 elementScrollBehavior: 1
-        MailCatcherGuzzle5:
+        MailCatcher:
             url: 'http://127.0.0.1'
             port: '1080'
 
