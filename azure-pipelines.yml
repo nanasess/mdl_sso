@@ -22,6 +22,8 @@ variables:
 
 strategy:
     matrix:
+      php_73_x:
+        phpVersion: 7.3
       php_72_x:
         phpVersion: 7.2
       php_71_x:
@@ -38,11 +40,6 @@ steps:
     sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
     php -version
   displayName: 'Use PHP version $(phpVersion)'
-- task: CacheBeta@0
-  inputs:
-    key: '$(Build.SourcesDirectory)/../eccube-2_13/package-lock.json'
-    path: '$(Pipeline.Workspace)/.composer/cache'
-  displayName: 'Caching to composer'
 
 - script: |
     sudo apt-get install -y build-essential debconf-utils screen mysql-server google-chrome-stable
@@ -54,14 +51,22 @@ steps:
 - script: |
     cd ../
     git clone https://github.com/EC-CUBE/eccube-2_13.git
-    cd eccube-2_13
+  displayName: 'Clone to eccube'
+- task: CacheBeta@0
+  inputs:
+    key: '$(Build.SourcesDirectory)/../eccube-2_13/package-lock.json'
+    path: '$(Pipeline.Workspace)/.composer/cache'
+  displayName: 'Caching to composer'
+
+- script: |
+    cd ../eccube-2_13
     composer self-update || true
     composer config repositories.nanasess/mdl_sso path $(Build.SourcesDirectory)
     composer --ignore-platform-reqs require  guzzlehttp/guzzle "^6.3"
     composer --ignore-platform-reqs require nanasess/mdl_sso "*@dev"
     composer --ignore-platform-reqs install --no-interaction --prefer-dist
     ./eccube_install.sh mysql
-  displayName: "clone to eccube"
+  displayName: "Setup to eccube"
 
 - script: cat ../eccube-2_13/data/config/config.php
   displayName: 'display to config.php'
