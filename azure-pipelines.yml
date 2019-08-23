@@ -38,6 +38,11 @@ steps:
     sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
     php -version
   displayName: 'Use PHP version $(phpVersion)'
+- task: CacheBeta@0
+  inputs:
+    key: '$(Build.SourcesDirectory)/../eccube-2_13/package-lock.json'
+    path: '$(Pipeline.Workspace)/.composer/cache'
+  displayName: 'Caching to composer'
 
 - script: |
     sudo apt-get install -y build-essential debconf-utils screen mysql-server google-chrome-stable
@@ -63,7 +68,7 @@ steps:
 - script: |
     cd ../eccube-2_13
     php --version
-    php data/vendor/bin/phpunit --log-junit tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
+    php data/vendor/bin/phpunit --log-junit $(Build.SourcesDirectory)/tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
   displayName: 'Run to PHPUnit'
 
 # Publish Test Results to Azure Pipelines/TFS
