@@ -47,6 +47,13 @@ steps:
     sudo apt-get install -y unzip xvfb autogen autoconf libtool pkg-config nasm
     sudo mysql -uroot -proot -e "use mysql; update user set authentication_string=PASSWORD('password') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
     sudo mysql -u root -ppassword -e 'create database eccube_db;'
+    sudo mysql -u root -ppassword -e "SET global sql_mode = '';"
+    wget -c -nc --retry-connrefused --tries=0 http://chromedriver.storage.googleapis.com/2.43/chromedriver_linux64.zip
+    unzip -o -q chromedriver_linux64.zip
+    sudo chmod +x ./chromedriver
+    docker pull schickling/mailcatcher
+    docker run -d -p 1080:1080 -p 1025:1025 --name mailcatcher schickling/mailcatcher
+    ./chromedriver --url-base=/wd/hub &
   displayName: 'Installing System Dependencies'
 
 - script: |
@@ -68,6 +75,10 @@ steps:
     composer --ignore-platform-reqs install --no-interaction --prefer-dist
     ./eccube_install.sh mysql
     ./data/vendor/nanasess/mdl_sso/install_mdl_sso.sh mysql
+    export DISPLAY=:99.0
+    sh -e /etc/init.d/xvfb start
+    php -S localhost:8085 -t html/ &
+    php data/vendor/bin/codecept build
   displayName: "Setup to eccube"
 
 - script: cat ../eccube-2_13/data/config/config.php
@@ -78,8 +89,15 @@ steps:
     php data/vendor/bin/phpunit --log-junit $(Build.SourcesDirectory)/tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
   displayName: 'Run to PHPUnit'
 
+- script: |
+    cd ../eccube-2_13
+    php --version
+    php data/vendor/bin/codecept run --xml $(Build.SourcesDirectory)/tests/TEST-codeception-junit.xml -c data/vendor/nanasess/mdl_sso/codeception.yml --env chrome --steps acceptance
+  displayName: 'Run to Codeception'
+
 # Publish Test Results to Azure Pipelines/TFS
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/TEST-*.xml'
+    mergeTestResults: true
