@@ -83,7 +83,10 @@ steps:
     php --version
     php data/vendor/bin/phpunit --log-junit $(Build.SourcesDirectory)/tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
   displayName: 'Run to PHPUnit'
-
+- script: |
+    /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    echo ">>> Started xvfb"
+  displayName: Start xvfb
 - script: |
     cd ../eccube-2_13
     php -S localhost:8085 -t html/ &
