@@ -61,7 +61,8 @@ steps:
   displayName: 'Clone to eccube'
 - task: CacheBeta@0
   inputs:
-    key: '$(Build.SourcesDirectory)/../eccube-2_13/composer.lock'
+#    key: '$(Build.SourcesDirectory)/../eccube-2_13/composer.lock'
+    key: 'composer | $(Agent.OS)'
     path: '/home/vsts/.composer/cache'
   displayName: 'Caching to composer'
 
