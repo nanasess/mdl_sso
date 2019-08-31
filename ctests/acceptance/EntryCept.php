@@ -49,5 +49,5 @@ $I->see('本登録が完了いたしました');
 
 $I->seeEmailCount(1);
 $I->seeInLastEmailSubjectTo($new_email, '会員登録のご完了');
-$I->seeInLastEmailTo($new_email, $form['name01'].$form['name02'].' 様');
-$I->seeInLastEmailTo($new_email, '本会員登録が完了いたしました。');
+// $I->seeInLastEmailTo($new_email, $form['name01'].$form['name02'].' 様');
+// $I->seeInLastEmailTo($new_email, '本会員登録が完了いたしました。');
