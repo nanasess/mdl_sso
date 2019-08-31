@@ -44,7 +44,7 @@ steps:
 
 - script: |
     sudo apt-get install -y build-essential debconf-utils screen mysql-server google-chrome-stable
-    sudo apt-get install -y unzip xvfb autogen autoconf libtool pkg-config nasm
+    sudo apt-get install -y unzip xvfb autogen autoconf libtool pkg-config nasm libgconf-2-4
     sudo mysql -uroot -proot -e "use mysql; update user set authentication_string=PASSWORD('password') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
     sudo mysql -u root -ppassword -e 'create database eccube_db;'
     sudo mysql -u root -ppassword -e "SET global sql_mode = '';"
@@ -86,8 +86,6 @@ steps:
 
 - script: |
     cd ../eccube-2_13
-    export DISPLAY=:99.0
-    sh -e /etc/init.d/xvfb start
     php -S localhost:8085 -t html/ &
     php data/vendor/bin/codecept build
     ./chromedriver --url-base=/wd/hub &
