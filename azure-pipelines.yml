@@ -91,7 +91,7 @@ steps:
     cd ../eccube-2_13
     php -S localhost:8085 -t html/ &
     php data/vendor/bin/codecept build
-    ./chromedriver --url-base=/wd/hub &
+    $(Build.SourcesDirectory)/chromedriver --url-base=/wd/hub &
     php --version
     php data/vendor/bin/codecept run --xml $(Build.SourcesDirectory)/tests/TEST-codeception-junit.xml -c data/vendor/nanasess/mdl_sso/codeception.yml --env chrome --steps acceptance
   displayName: 'Run to Codeception'
