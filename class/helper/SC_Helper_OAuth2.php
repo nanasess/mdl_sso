@@ -98,12 +98,15 @@ class SC_Helper_OAuth2
                 ];
             }
             GC_Utils_Ex::gfPrintLog($objClient->token_endpoint.' にPOSTします '.var_export($headers, true).var_export($params, true));
-            $response = $httpClient->post($objClient->token_endpoint,
-                                      [
-                                          'headers' => $headers,
-                                          'body' => $params
-                                      ]
+            $response = $httpClient->request(
+                'POST',
+                $objClient->token_endpoint,
+                [
+                    'headers' => $headers,
+                    'json' => $params
+                ]
             );
+
             return json_decode($response->getBody(), true);
         } catch (Exception $e) {
             throw $e;
@@ -124,7 +127,7 @@ class SC_Helper_OAuth2
             'Authorization' => 'Bearer '.$access_token
         ];
 
-        $response = $httpClient->get($objClient->userinfo_endpoint,
+        $response = $httpClient->request('GET', $objClient->userinfo_endpoint,
                                  [
                                      'headers' => $headers
                                  ]);

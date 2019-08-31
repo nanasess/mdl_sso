@@ -7,23 +7,27 @@ class SC_Helper_OAuth2Test extends Common_TestCase
      */
     private $objClient;
 
+    /** @var Faker\Generator */
     private $faker;
+
+    /** @var string */
+    const CLIENT_NAME = 'DUMMY';
 
     protected function setUp()
     {
         parent::setUp();
-        $this->markTestIncomplete('Not implemented');
         $arrClient = [
-            'oauth2_client_id' => PHP_INT_SIZE,
+            'oauth2_client_id' => PHP_INT_MAX,
             'short_name' => 'DUMMY',
             'client_id' => 'oauth2_client',
             'client_secret' => 'secret',
             'app_name' => 'dummy apps',
-            'authorize_endpoint' => 'http://localhost:8085/test/sso/endpoint.php?type=authorize',
-            'token_endpoint' => 'http://localhost:8085/test/sso/endpoint.php?type=token',
-            'userinfo_endpoint' => 'http://localhost:8085/test/sso/endpoint.php?type=userinfo',
+            'authorize_endpoint' => 'http://localhost:8085/sso/DUMMY/authorize',
+            'token_endpoint' => 'http://localhost:8085/sso/DUMMY/token',
+            'userinfo_endpoint' => 'http://localhost:8085/sso/DUMMY/userinfo',
             'scope' => 'profile'
         ];
+        $this->objQuery->insert('dtb_oauth2_client', $arrClient);
         $this->objClient = new OAuth2Client($arrClient);
 
         $this->faker = Faker\Factory::create('ja_JP');
@@ -31,7 +35,7 @@ class SC_Helper_OAuth2Test extends Common_TestCase
 
     public function testValidateShortName()
     {
-        $actual = SC_Helper_OAuth2::validateShortName(OAuth2Client::AMAZON);
+        $actual = SC_Helper_OAuth2::validateShortName(self::CLIENT_NAME);
         $this->assertTrue($actual);
     }
 
@@ -43,14 +47,14 @@ class SC_Helper_OAuth2Test extends Common_TestCase
 
     public function testGetOAuth2Client()
     {
-        $actual = SC_Helper_OAuth2::getOAuth2Client(OAuth2Client::AMAZON);
+        $actual = SC_Helper_OAuth2::getOAuth2Client(self::CLIENT_NAME);
         $this->assertInstanceOf('OAuth2Client', $actual);
     }
 
     public function testGetRedirectUri()
     {
-        $expected = HTTPS_URL.'sso/'.OAuth2Client::AMAZON.'/redirect';
-        $actual = SC_Helper_OAuth2::getRedirectUri(OAuth2Client::AMAZON);
+        $expected = HTTPS_URL.'sso/'.self::CLIENT_NAME.'/redirect';
+        $actual = SC_Helper_OAuth2::getRedirectUri(self::CLIENT_NAME);
         $this->assertEquals($expected, $actual);
     }
 
@@ -72,16 +76,11 @@ class SC_Helper_OAuth2Test extends Common_TestCase
                         'token_type' => 'Bearer',
                         'scope' => $this->objClient->scope
                     ]);
-        $body = GuzzleHttp\Stream\Stream::factory($access_token);
-        $mock = new GuzzleHttp\Subscriber\Mock(
-            [
-                new GuzzleHttp\Message\Response(200, ['Content-Type' => 'application/json'], $body)
-            ]
-        );
-        $mockClient = new GuzzleHttp\Client([
-            'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath(),
+        $mock = new GuzzleHttp\Handler\MockHandler([
+            new GuzzleHttp\Psr7\Response(200, ['Content-Type' => 'application/json'], $access_token)
         ]);
-        $mockClient->getEmitter()->attach($mock);
+        $handler = GuzzleHttp\HandlerStack::create($mock);
+        $mockClient = new GuzzleHttp\Client(['handler' => $handler]);
 
         $expected = json_decode($access_token, true);
         $actual = SC_Helper_OAuth2::getAccessToken($mockClient, $this->objClient, 'authorization_code', 'state');
@@ -99,23 +98,16 @@ class SC_Helper_OAuth2Test extends Common_TestCase
             ]
         );
         $access_token = 'access_token';
-        $body = GuzzleHttp\Stream\Stream::factory($userinfo);
-        $mock = new GuzzleHttp\Subscriber\Mock(
-            [
-                new GuzzleHttp\Message\Response(
-                    200,
-                    [
-                        'Content-Type' => 'application/json',
-                        'Authorization' => 'Bearer '.$access_token
-                    ],
-                    $body
-                )
-            ]
-        );
-        $mockClient = new GuzzleHttp\Client([
-            'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath(),
+        $mock = new GuzzleHttp\Handler\MockHandler([
+            new GuzzleHttp\Psr7\Response(
+                200,
+                [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer '.$access_token
+                ], $userinfo)
         ]);
-        $mockClient->getEmitter()->attach($mock);
+        $handler = GuzzleHttp\HandlerStack::create($mock);
+        $mockClient = new GuzzleHttp\Client(['handler' => $handler]);
 
         $expected = json_decode($userinfo, true);
         $actual = SC_Helper_OAuth2::getUserInfo($mockClient, $this->objClient, $access_token);
