@@ -67,6 +67,7 @@ steps:
     composer --ignore-platform-reqs require nanasess/mdl_sso "*@dev"
     composer --ignore-platform-reqs install --no-interaction --prefer-dist
     ./eccube_install.sh mysql
+    ./data/vendor/nanasess/mdl_sso/install_mdl_sso.sh mysql
   displayName: "Setup to eccube"
 
 - script: cat ../eccube-2_13/data/config/config.php
