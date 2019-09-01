@@ -93,6 +93,7 @@ steps:
 - script: |
     cd ../eccube-2_13
     php -S localhost:8085 -t html/ html/router.php &
+    php -S localhost:8086 -t html/ html/router.php &
     php data/vendor/bin/codecept build
     $(Build.SourcesDirectory)/chromedriver --url-base=/wd/hub &
     php --version
