@@ -39,6 +39,7 @@ steps:
     sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
     sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
     sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
+    sudo phpdismod -s cli xdebug
     php -version
   displayName: 'Use PHP version $(phpVersion)'
 
@@ -91,9 +92,10 @@ steps:
   displayName: Start xvfb
 - script: |
     cd ../eccube-2_13
-    php -S localhost:8085 -t html/ html/router.php &
     php data/vendor/bin/codecept build
     $(Build.SourcesDirectory)/chromedriver --url-base=/wd/hub &
+    php -S 0.0.0.0:8085 -t html/ html/router.php &
+    php -S 0.0.0.0:8086 -t html/ html/router.php &
     php --version
     php data/vendor/bin/codecept run --xml $(Build.SourcesDirectory)/tests/TEST-codeception-junit.xml -c data/vendor/nanasess/mdl_sso/codeception.yml --env chrome --steps acceptance
   displayName: 'Run to Codeception'
