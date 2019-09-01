@@ -131,6 +131,30 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $this->assertNotNull($actual['updated_at']);
     }
 
+    public function testGetAddressByZipCode()
+    {
+        $httpClient = new GuzzleHttp\Client([
+            'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()
+        ]);
+        $this->expected = [
+            'pref_id' => '23',
+            'pref' => '愛知県',
+            'addr01' => '西尾市',
+            'addr02' => '一色町治明'
+        ];
+        $this->actual = SC_Helper_OAuth2::getAddressByZipcode($httpClient, '444', '0426');
+        $this->verify();
+    }
+
+    public function testGetAddressByZipCodeWithEmpty()
+    {
+        $httpClient = new GuzzleHttp\Client([
+            'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()
+        ]);
+        $this->expected = [];
+        $this->actual = SC_Helper_OAuth2::getAddressByZipcode($httpClient, '', '0426');
+        $this->verify();
+    }
     public function registerCustomer()
     {}
 }

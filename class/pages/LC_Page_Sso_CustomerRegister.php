@@ -10,6 +10,12 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
     public function init()
     {
         parent::init();
+        if (!is_object($this->httpClient)) {
+            $this->httpClient = new GuzzleHttp\Client([
+                'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()
+            ]);
+        }
+        $this->tpl_title = '会員登録';
         $masterData         = new SC_DB_MasterData_Ex();
         $this->arrPref      = $masterData->getMasterData('mtb_pref');
         $this->arrJob       = $masterData->getMasterData('mtb_job');
@@ -25,7 +31,8 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $this->arrDay       = $objDate->getDay(true);
 
         $this->httpCacheControl('nocache');
-        $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register.tpl'));
+        // $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register.tpl'));
+        $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register_kiyaku_only.tpl'));
     }
 
     /**
@@ -49,26 +56,46 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         SC_Helper_Customer_Ex::sfCustomerEntryParam($objFormParam);
         $objFormParam->setParam($_POST);
 
+        $password = SC_Utils_Ex::sfGetRandomString(16);
+        $password .= 'abc123';
+
         switch ($this->getMode()) {
             case 'confirm':
-                $objFormParam->setValue('password', 'password');
-                $objFormParam->setValue('password02', 'password');
+                $objFormParam->setValue('password', $password);
+                $objFormParam->setValue('password02', $password);
                 $objFormParam->setValue('reminder', 1);
-                $objFormParam->setValue('reminder_answer', 'reminder_answer');
+                $objFormParam->setValue('reminder_answer', $password);
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
+
                 // 入力エラーなし
                 if (empty($this->arrErr)) {
                     $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/confirm.tpl'));
                 }
                 break;
             case 'complete':
-                $objFormParam->setValue('password', 'password');
-                $objFormParam->setValue('password02', 'password');
+                $objFormParam->setValue('name01', $_SESSION['userinfo']['name']);
+                $objFormParam->setValue('email', $_SESSION['userinfo']['email']);
+                $objFormParam->setValue('email02', $_SESSION['userinfo']['email']);
+                if (array_key_exists('postal_code', $_SESSION['userinfo']) && isset($_SESSION['userinfo']['postal_code'])) {
+                    $zipcode = preg_replace('/[^0-9]/', '', $_SESSION['userinfo']['postal_code']);
+                    $zip01 = substr($zipcode, 0, 3);
+                    $zip02 = substr($zipcode, 3);
+                    $objFormParam->setValue('zip01', $zip01);
+                    $objFormParam->setValue('zip02', $zip02);
+                    $arrAddress = SC_Helper_OAuth2::getAddressByZipcode($this->httpClient, $zip01, $zip02);
+                    if (!empty($arrAddress)) {
+                        $objFormParam->setValue('pref', $arrAddress['pref_id']);
+                        $objFormParam->setValue('addr01', $arrAddress['addr01']);
+                        $objFormParam->setValue('addr02', $arrAddress['addr02']);
+                    }
+                }
+                $objFormParam->setValue('password', $password);
+                $objFormParam->setValue('password02', $password);
                 $objFormParam->setValue('reminder', 1);
-                $objFormParam->setValue('reminder_answer', 'reminder_answer');
+                $objFormParam->setValue('reminder_answer', $password);
 
-                $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
-                if (empty($this->arrErr)) {
+                // $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
+                if (!empty($_SESSION['userinfo'])) {
                     SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
 
                     $this->lfSendMail($uniqid, $objFormParam->getHashArray());
@@ -81,8 +108,10 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                     $_SESSION['userinfo']['customer_id'] = $customer_id;
                     SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
                     SC_Helper_OAuth2::registerToken($_SESSION['userinfo']);
+                    unset($_SESSION['userinfo']);
+                    unset($_SESSION['token']);
                     // 完了ページに移動させる。
-                    SC_Response_Ex::sendRedirect('complete.php');
+                    SC_Response_Ex::sendRedirect('/regist/complete.php');
                 }
                 break;
             default:
@@ -129,7 +158,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         return $arrKiyaku;
     }
 
-        /**
+    /**
      * 会員登録完了メール送信する
      *
      * @access private
@@ -205,7 +234,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
      *
      * @param SC_FormParam $objFormParam
      * @access private
-     * @return $arrResults
+     * @return array
      */
     public function lfMakeSqlVal(&$objFormParam)
     {

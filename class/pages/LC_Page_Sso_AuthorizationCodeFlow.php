@@ -2,12 +2,6 @@
 
 class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
 {
-
-    /**
-     * @var GuzzleHttp\Client
-     */
-    protected $httpClient;
-
     /**
      * @var OAuth2Client
      */
@@ -86,7 +80,7 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                 //$objQuery->insert('dtb_oauth2_token', $arrToken);
                 // $userInfo = $client->post($arrClient['token_endpoint'], array(), $params)->json();
                 $userInfo = SC_Helper_OAuth2::getUserInfo($this->httpClient, $this->objClient, $token['access_token']);
-
+                $arrUserInfo = [];
                 switch ($this->short_name) {
                     case 'AMZN':
                         $arrUserInfo = [
@@ -167,12 +161,12 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                     $this->sendRedirect();
                     SC_Response_Ex::actionExit();
                 } else {
-                    GC_Utils_Ex::gfPrintLog('Customer が存在しないため、登録画面に遷移します '.print_r($arrToken, true));
                     // register Customer
                     $_SESSION['token'] = $arrToken;
                     $_SESSION['userinfo'] = $arrUserInfo; // SESSION に保存しておいてリダイレクト後に登録する
+                    GC_Utils_Ex::gfPrintLog('Customer が存在しないため、登録画面に遷移します '.print_r($_SESSION['token'], true).print_r($_SESSION['userinfo'], true));
                     unset($_SESSION['state']);
-                    SC_Response_Ex::sendRedirectFromUrlPath('sso/register.php', ['short_name' => $this->objClient->short_name]);
+                    SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->objClient->short_name.'/register');
                     SC_Response_Ex::actionExit();
                 }
             } catch (Exception $e) {

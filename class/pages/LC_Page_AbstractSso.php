@@ -2,6 +2,11 @@
 
 abstract class LC_Page_AbstractSso extends LC_Page_Ex
 {
+    /**
+     * @var GuzzleHttp\Client
+     */
+    protected $httpClient;
+
     /** @var string */
     protected $short_name;
     /** @var array */

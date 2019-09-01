@@ -37,6 +37,12 @@ class AuthorizationCodeFlowCest
     {
         $I->wantTo('Success Authorization code response');
         $I->amOnPage('/sso/DUMMY/redirect?code=authorization_code');
-        $I->DontSeeElement('.error');
+
+        $I->expect('利用規約を確認し会員登録する');
+        $I->see('会員登録');
+        $I->selectOption('input[name=mailmaga_flg]', 1);
+        $I->click(['id' => 'register']);
+
+        $I->see('会員登録(完了ページ)');
     }
 }
