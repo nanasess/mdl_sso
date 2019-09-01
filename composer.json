@@ -22,5 +22,8 @@
         "classmap": [
             "class"
         ]
+    },
+    "require-dev": {
+        "vlucas/phpdotenv": "^3.5"
     }
 }
