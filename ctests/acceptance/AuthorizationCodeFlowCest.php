@@ -44,5 +44,6 @@ class AuthorizationCodeFlowCest
         $I->click(['id' => 'register']);
 
         $I->see('会員登録(完了ページ)');
+        $I->seeInDatabase('dtb_customer', ['email' => 'email@example.com']);
     }
 }

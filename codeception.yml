@@ -10,8 +10,6 @@ settings:
     memory_limit: 1024M
 params:
     - env
-    - .env
-    - .env.dist
 modules:
     config:
         Db:

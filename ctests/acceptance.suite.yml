@@ -10,6 +10,7 @@ modules:
         - AcceptanceHelper
         - WebDriver
         - MailCatcher
+        - Db
     config:
         PhpBrowser:
             url: 'http://localhost:8085/'
