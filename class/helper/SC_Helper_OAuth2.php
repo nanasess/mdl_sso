@@ -21,6 +21,7 @@ class SC_Helper_OAuth2
     /**
      * 略称の妥当性を検証します.
      *
+     * @param string $short_name
      * @return bool
      */
     public static function validateShortName($short_name)
@@ -103,7 +104,9 @@ class SC_Helper_OAuth2
                 $objClient->token_endpoint,
                 [
                     'headers' => $headers,
-                    'json' => $params
+                    'json' => $params,
+                    'timeout' => 5,
+                    'connect_timeout' => 5
                 ]
             );
 
@@ -129,7 +132,9 @@ class SC_Helper_OAuth2
 
         $response = $httpClient->request('GET', $objClient->userinfo_endpoint,
                                  [
-                                     'headers' => $headers
+                                     'headers' => $headers,
+                                     'timeout' => 5,
+                                     'connect_timeout' => 5
                                  ]);
 
         $userinfo = json_decode($response->getBody(), true);
