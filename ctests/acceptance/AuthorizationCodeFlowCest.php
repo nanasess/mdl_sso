@@ -7,8 +7,9 @@ class AuthorizationCodeFlowCest
     {
     }
 
-    public function _after(AcceptanceTester $I)
+    public function _after(AcceptanceTester $I, \Codeception\Module\AcceptanceHelper $helper)
     {
+        $helper->deleteCustomer('email@example.com');
     }
 
     // tests
@@ -43,7 +44,11 @@ class AuthorizationCodeFlowCest
         $I->selectOption('input[name=mailmaga_flg]', 1);
         $I->click(['id' => 'register']);
 
+        $I->expect('会員登録完了を確認する');
         $I->see('会員登録(完了ページ)');
-        $I->seeInDatabase('dtb_customer', ['email' => 'email@example.com']);
+        $I->seeNumRecords(1, 'dtb_customer', ['email' => 'email@example.com']);
+
+        $I->expect('ログイン完了を確認する');
+        $I->see('お名前 様', ['css' => '.user_name']);
     }
 }

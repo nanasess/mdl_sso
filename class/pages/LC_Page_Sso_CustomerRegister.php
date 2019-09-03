@@ -96,22 +96,21 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
                 // $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
                 if (!empty($_SESSION['userinfo'])) {
-                    SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
+                    $customer_id = SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
 
-                    $this->lfSendMail($uniqid, $objFormParam->getHashArray());
+                    $this->lfSendMail($customer_id, $objFormParam->getHashArray());
 
                     // ログイン状態にする
                     $objCustomer = new SC_Customer_Ex();
                     $objCustomer->setLogin($objFormParam->getValue('email'));
 
-                    $_SESSION['registered_customer_id'] = $customer_id = SC_Helper_Customer_Ex::sfGetCustomerId($uniqid);
                     $_SESSION['userinfo']['customer_id'] = $customer_id;
                     SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
                     SC_Helper_OAuth2::registerToken($_SESSION['userinfo']);
                     unset($_SESSION['userinfo']);
                     unset($_SESSION['token']);
                     // 完了ページに移動させる。
-                    SC_Response_Ex::sendRedirect('/regist/complete.php');
+                    SC_Response_Ex::sendRedirect('/sso/complete');
                 }
                 break;
             default:

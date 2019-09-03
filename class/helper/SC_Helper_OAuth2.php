@@ -171,9 +171,41 @@ class SC_Helper_OAuth2
     {
     }
 
+    /**
+     * Register to UserInfo.
+     *
+     * @param array<string,string> $arrUserInfo Array of the UserInfo
+     * @return array Registered the UserInfo.
+     */
     public static function registerUserInfo(array $arrUserInfo)
     {
-        $arrUserInfo['updated_at'] = new DateTime();
-        return $arrUserInfo;
+        $objQuery = SC_Query_Ex::getSingletonInstance();
+        $hasCustomer = $objQuery->exists('dtb_customer', 'del_flg = 0 AND status = 2 AND customer_id = ?', [$arrUserInfo['customer_id']]);
+        if (!$hasCustomer) {
+            throw new Exception('Customer not found');
+        }
+        $hasUserInfo = $objQuery->exists('dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?',
+                                         [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        if ($hasUserInfo) {
+            $objQuery->update('dtb_oauth2_openid_userinfo', ['update_at' => 'CURRENT_TIMESTAMP'], 'oauth2_client_id = ? AND customer_id = ?',
+                                                           [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+            return $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?',
+                                     [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        }
+
+        $arrUserInfo = $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo', $arrUserInfo);
+        $objQuery->insert('dtb_oauth2_openid_userinfo', $arrUserInfo);
+        $arrUserInfoAddress = [
+            'oauth2_client_id' => $arrUserInfo['oauth2_client_id'],
+            'customer_id' => $arrUserInfo['customer_id'],
+        ];
+        // for Login with Amazon
+        if (array_key_exists('postal_code', $arrUserInfo)) {
+            $arrUserInfoAddress['postal_code'] = $arrUserInfo['postal_code'];
+        }
+        $objQuery->insert('dtb_oauth2_openid_userinfo_address', $arrUserInfoAddress);
+
+        return $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?',
+                                 [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
     }
 }

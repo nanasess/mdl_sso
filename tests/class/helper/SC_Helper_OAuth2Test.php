@@ -10,6 +10,9 @@ class SC_Helper_OAuth2Test extends Common_TestCase
     /** @var Faker\Generator */
     private $faker;
 
+    /** @var FixtureGenerator */
+    private $objGenerator;
+
     /** @var string */
     const CLIENT_NAME = 'DUMMY';
 
@@ -31,6 +34,7 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $this->objClient = new OAuth2Client($arrClient);
 
         $this->faker = Faker\Factory::create('ja_JP');
+        $this->objGenerator = new FixtureGenerator($this->objQuery);
     }
 
     public function testValidateShortName()
@@ -114,23 +118,6 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $this->assertEquals($expected, $actual);
     }
 
-    public function testRegisterUserInfo()
-    {
-        $this->markTestIncomplete();
-        $objClient = SC_Helper_OAuth2::getOAuth2Client('DUMMY');
-        $arrUserInfo = [
-            'oauth2_client_id' => $objClient->oauth2_client_id,
-            'customer_id' => $this->faker->randomNumber(),
-            'sub' => 'user_id',
-            'name' => $this->faker->name,
-            'email' => $this->faker->safeEmail,
-            'postal_code' => $this->faker->postcode
-        ];
-
-        $actual = SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
-        $this->assertNotNull($actual['updated_at']);
-    }
-
     public function testGetAddressByZipCode()
     {
         $httpClient = new GuzzleHttp\Client([
@@ -155,6 +142,22 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $this->actual = SC_Helper_OAuth2::getAddressByZipcode($httpClient, '', '0426');
         $this->verify();
     }
-    public function registerCustomer()
-    {}
+
+    public function testRegisterUserInfo()
+    {
+        $customer_id = $this->objGenerator->createCustomer();
+        $arrCustomer = $this->objQuery->getRow('*', 'dtb_customer', 'del_flg = 0 AND status = 2 AND customer_id = ?', [$customer_id]);
+        $arrUserInfo = [
+            'oauth2_client_id' => '999999',
+            'customer_id' => $customer_id,
+            'sub' => $this->faker->word,
+            'name' => $arrCustomer['name01'],
+            'email' => $arrCustomer['email']
+        ];
+        $this->actual = SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
+        $this->expected = $arrUserInfo;
+        foreach (array_keys($arrUserInfo) as $key) {
+            $this->assertEquals($this->expected[$key], $this->actual[$key]);
+        }
+    }
 }
