@@ -159,5 +159,32 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         foreach (array_keys($arrUserInfo) as $key) {
             $this->assertEquals($this->expected[$key], $this->actual[$key]);
         }
+
+        $arrAddress = $this->objQuery->getRow('*', 'dtb_oauth2_openid_userinfo_address', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        $this->assertEquals($arrUserInfo['oauth2_client_id'], $arrAddress['oauth2_client_id']);
+    }
+
+    public function testRegisterUserInfoWithAmazon()
+    {
+        $customer_id = $this->objGenerator->createCustomer();
+        $arrCustomer = $this->objQuery->getRow('*', 'dtb_customer', 'del_flg = 0 AND status = 2 AND customer_id = ?', [$customer_id]);
+        $arrUserInfo = [
+            'oauth2_client_id' => '999999',
+            'customer_id' => $customer_id,
+            'sub' => $this->faker->word,
+            'name' => $arrCustomer['name01'],
+            'email' => $arrCustomer['email'],
+            'postal_code' => '4440426' // for amazon
+        ];
+        $this->actual = SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
+        $this->expected = $arrUserInfo;
+        foreach (array_keys($arrUserInfo) as $key) {
+            $this->assertEquals($this->expected[$key], $this->actual[$key]);
+        }
+
+        $arrAddress = $this->objQuery->getRow('*', 'dtb_oauth2_openid_userinfo_address', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        var_dump($arrAddress);
+        $this->assertEquals($arrUserInfo['oauth2_client_id'], $arrAddress['oauth2_client_id']);
+        $this->assertEquals('4440426', $arrAddress['postal_code']);
     }
 }

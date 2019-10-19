@@ -174,6 +174,8 @@ class SC_Helper_OAuth2
     /**
      * Register to UserInfo.
      *
+     * TODO Address claim support
+     *
      * @param array<string,string> $arrUserInfo Array of the UserInfo
      * @return array Registered the UserInfo.
      */
@@ -193,8 +195,7 @@ class SC_Helper_OAuth2
                                      [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
         }
 
-        $arrUserInfo = $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo', $arrUserInfo);
-        $objQuery->insert('dtb_oauth2_openid_userinfo', $arrUserInfo);
+        $objQuery->insert('dtb_oauth2_openid_userinfo', $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo', $arrUserInfo));
         $arrUserInfoAddress = [
             'oauth2_client_id' => $arrUserInfo['oauth2_client_id'],
             'customer_id' => $arrUserInfo['customer_id'],
@@ -203,6 +204,7 @@ class SC_Helper_OAuth2
         if (array_key_exists('postal_code', $arrUserInfo)) {
             $arrUserInfoAddress['postal_code'] = $arrUserInfo['postal_code'];
         }
+
         $objQuery->insert('dtb_oauth2_openid_userinfo_address', $arrUserInfoAddress);
 
         return $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?',
