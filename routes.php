@@ -28,12 +28,14 @@ return $routes = function (FastRoute\RouteCollector $r) {
                 ]);
         });
         $r->addRoute(['GET', 'POST'], '/sso/{short_name}/userinfo', function (array $vars) {
+            /** @var Faker\Generator $faker */
+            $faker = Faker\Factory::create('ja_JP');
             echo json_encode(
                 [
-                    'user_id' => 'user_id',
-                    'name' => 'name',
-                    'email' => 'email@example.com',
-                    'postal_code' => '9993333'
+                    'user_id' => $faker->uuid,
+                    'name' => $faker->name,
+                    'email' => microtime(true).'.'.$faker->safeEmail,
+                    'postal_code' => $faker->postcode
                 ]);
         });
     }

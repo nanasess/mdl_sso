@@ -38,5 +38,9 @@ class AuthorizationCodeFlowCest
         $I->wantTo('Success Authorization code response');
         $I->amOnPage('/sso/DUMMY/redirect?code=authorization_code');
         $I->DontSeeElement('.error');
+
+        $I->expect('会員登録をします');
+        $name = $I->grabValueFrom('name01');
+        $I->assertNotNull($name);
     }
 }
