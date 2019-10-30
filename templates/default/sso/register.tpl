@@ -7,12 +7,33 @@
         <p>下記項目にご入力ください。「<span class="attention">※</span>」印は入力必須項目です。<br />
             入力後、一番下の「確認ページへ」ボタンをクリックしてください。</p>
 
-        <form name="form1" id="form1" method="post" action="?short_name=<!--{$short_name}-->">
+        <form name="form1" id="form1" method="post" action="?">
             <input type="hidden" name="<!--{$smarty.const.TRANSACTION_ID_NAME}-->" value="<!--{$transactionid}-->" />
             <input type="hidden" name="mode" value="confirm" />
             <input type="hidden" name="customer_id" value="<!--{$arrForm.customer_id.value|h}-->" />
             <table summary="会員登録 " class="delivname">
-                <!--{include file="`$smarty.const.TEMPLATE_REALDIR`frontparts/form_personal_input.tpl" flgFields=2 prefix=""}-->
+                <col width="30%" />
+                <col width="70%" />
+                <tr>
+                    <th>お名前<span class="attention">※</span></th>
+                    <td>
+                        <!--{assign var=key1 value="`$prefix`name01"}-->
+                        <!--{if $arrErr[$key1]}-->
+                        <div class="attention"><!--{$arrErr[$key1]}--></div>
+                        <!--{/if}-->
+                        <input type="text" name="<!--{$key1}-->" value="<!--{$arrForm[$key1].value|h}-->" maxlength="<!--{$arrForm[$key1].length}-->" style="<!--{$arrErr[$key1]|sfGetErrorColor}-->; ime-mode: active;" class="box120" />&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <th>メールアドレス<span class="attention">※</span></th>
+                    <td>
+                        <!--{assign var=key1 value="`$prefix`email"}-->
+                        <!--{if $arrErr[$key1]}-->
+                        <div class="attention"><!--{$arrErr[$key1]}--></div>
+                        <!--{/if}-->
+                        <input type="text" name="<!--{$key1}-->" value="<!--{$arrForm[$key1].value|h}-->" style="<!--{$arrErr[$key1]|sfGetErrorColor}-->; ime-mode: disabled;" class="box300 top" /><br />
+                    </td>
+                </tr>
                 <tr>
                     <th>メールマガジン送付について<span class="attention">※</span></th>
                     <td>

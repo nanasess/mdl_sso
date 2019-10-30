@@ -9,6 +9,13 @@ return $routes = function (FastRoute\RouteCollector $r) {
         $objPage->process();
     });
 
+    $r->addRoute(['GET', 'POST'], '/sso/{short_name}/register', function (array $vars) {
+        $objPage = new LC_Page_Sso_CustomerRegister();
+        $objPage->setVars($vars);
+        $objPage->init();
+        $objPage->process();
+    });
+
     if ('cli-server' === php_sapi_name()) {
         $r->addRoute(['POST'], '/sso/{short_name}/token', function (array $vars) {
             echo json_encode(

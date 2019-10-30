@@ -2,6 +2,27 @@
 
 class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 {
+    /** @var string[] */
+    public $arrPref;
+    /** @var string[] */
+    public $arrJob;
+    /** @var string[] */
+    public $arrReminder;
+    /** @var string[] */
+    public $arrCountry;
+    /** @var string[] */
+    public $arrSex;
+    /** @var string[] */
+    public $arrMAILMAGATYPE;
+    /** @var int[] */
+    public $arrYear;
+    /** @var int[] */
+    public $arrMonth;
+    /** @var int[] */
+    public $arrDay;
+    /** @var int */
+    public $max;
+
     /**
      * Page を初期化する.
      *
@@ -20,7 +41,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
         // 生年月日選択肢の取得
         $objDate            = new SC_Date_Ex(BIRTH_YEAR, date('Y'));
-        $this->arrYear      = $objDate->getYear('', START_BIRTH_YEAR, '');
+        $this->arrYear      = $objDate->getYear('', '1980', '');
         $this->arrMonth     = $objDate->getMonth(true);
         $this->arrDay       = $objDate->getDay(true);
 
@@ -51,21 +72,17 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
         switch ($this->getMode()) {
             case 'confirm':
-                $objFormParam->setValue('password', 'password');
-                $objFormParam->setValue('password02', 'password');
-                $objFormParam->setValue('reminder', 1);
-                $objFormParam->setValue('reminder_answer', 'reminder_answer');
+                $this->setDummyFormParamTo($objFormParam);
+
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
+                var_dump($this->arrErr);
                 // 入力エラーなし
                 if (empty($this->arrErr)) {
                     $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/confirm.tpl'));
                 }
                 break;
             case 'complete':
-                $objFormParam->setValue('password', 'password');
-                $objFormParam->setValue('password02', 'password');
-                $objFormParam->setValue('reminder', 1);
-                $objFormParam->setValue('reminder_answer', 'reminder_answer');
+                $this->setDummyFormParamTo($objFormParam);
 
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
                 if (empty($this->arrErr)) {
@@ -82,13 +99,13 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                     SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
                     SC_Helper_OAuth2::registerToken($_SESSION['userinfo']);
                     // 完了ページに移動させる。
-                    SC_Response_Ex::sendRedirect('complete.php');
+                    SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->objClient->short_name.'/complete');
+                    SC_Response_Ex::actionExit();
                 }
                 break;
             default:
                 $objFormParam->setValue('name01', $_SESSION['userinfo']['name']);
                 $objFormParam->setValue('email', $_SESSION['userinfo']['email']);
-                $objFormParam->setValue('email02', $_SESSION['userinfo']['email']);
         }
 
         $this->arrForm = $objFormParam->getFormParamList();
@@ -129,7 +146,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         return $arrKiyaku;
     }
 
-        /**
+    /**
      * 会員登録完了メール送信する
      *
      * @access private
@@ -143,7 +160,6 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $objMailText->setPage($this);
         $objMailText->assign('CONF', $CONF);
         $objMailText->assign('name01', $arrForm['name01']);
-        $objMailText->assign('name02', $arrForm['name02']);
         $objMailText->assign('uniqid', $uniqid);
         $objMailText->assignobj($this);
 
@@ -228,6 +244,31 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $CONF = SC_Helper_DB_Ex::sfGetBasisData();
         $arrResults['point'] = $CONF['welcome_point'];
 
+        // TODO 姓名の間にスペースがあったら name01, name02 に分割する
         return $arrResults;
+    }
+
+    /**
+     * @param SC_FormParam_Ex $objFormParam
+     */
+    protected function setDummyFormParamTo(SC_FormParam_Ex $objFormParam)
+    {
+        $objFormParam->setValue('name02', '名');
+        $objFormParam->setValue('kana01', 'セイ');
+        $objFormParam->setValue('kana02', 'メイ');
+        $objFormParam->setValue('email02', $objFormParam->getValue('email'));
+        $objFormParam->setValue('zip01', '000');
+        $objFormParam->setValue('zip02', '0000');
+        $objFormParam->setValue('pref', '1');
+        $objFormParam->setValue('addr01', '1');
+        $objFormParam->setValue('addr02', '2');
+        $objFormParam->setValue('tel01', '000');
+        $objFormParam->setValue('tel02', '000');
+        $objFormParam->setValue('tel03', '000');
+        $objFormParam->setValue('sex', '0');
+        $objFormParam->setValue('password', 'password123');
+        $objFormParam->setValue('password02', 'password123');
+        $objFormParam->setValue('reminder', 1);
+        $objFormParam->setValue('reminder_answer', 'reminder_answer');
     }
 }

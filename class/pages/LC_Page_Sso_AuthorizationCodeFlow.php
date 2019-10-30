@@ -172,7 +172,7 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                     $_SESSION['token'] = $arrToken;
                     $_SESSION['userinfo'] = $arrUserInfo; // SESSION に保存しておいてリダイレクト後に登録する
                     unset($_SESSION['state']);
-                    SC_Response_Ex::sendRedirectFromUrlPath('sso/register.php', ['short_name' => $this->objClient->short_name]);
+                    SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->objClient->short_name.'/register');
                     SC_Response_Ex::actionExit();
                 }
             } catch (Exception $e) {

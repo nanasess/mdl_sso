@@ -12,7 +12,30 @@
             <!--{/foreach}-->
 
             <table summary="入力内容確認">
-                <!--{include file="`$smarty.const.TEMPLATE_REALDIR`frontparts/form_personal_confirm.tpl" flgFields=2 prefix=""}-->
+                <col width="30%" />
+                <col width="70%" />
+                <tr>
+                    <th>お名前</th>
+                    <td>
+                        <!--{assign var=key1 value="`$prefix`name01"}-->
+                        <!--{$arrForm[$key1].value|h}-->
+                    </td>
+                </tr>
+                <tr>
+                    <th>メールアドレス</th>
+                    <td>
+                        <!--{assign var=key1 value="`$prefix`email"}-->
+                        <a href="mailto:<!--{$arrForm[$key1].value|escape:'hex'}-->"><!--{$arrForm[$key1].value|escape:'hexentity'}--></a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>メールマガジン送付について</th>
+                    <td>
+                        <!--{assign var=key1 value="`$prefix`mailmaga_flg"}-->
+                        <!--{assign var="mailmaga_flg_id" value=$arrForm[$key1].value}-->
+                        <!--{$arrMAILMAGATYPE[$mailmaga_flg_id]|h}-->
+                    </td>
+                </tr>
             </table>
 
             <div class="btn_area">
