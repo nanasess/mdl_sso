@@ -75,7 +75,6 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                 $this->setDummyFormParamTo($objFormParam);
 
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
-                var_dump($this->arrErr);
                 // 入力エラーなし
                 if (empty($this->arrErr)) {
                     $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/confirm.tpl'));
@@ -86,6 +85,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
                 if (empty($this->arrErr)) {
+                    $this->setDummyFormCompleteParamTo($objFormParam);
                     SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
 
                     $this->lfSendMail($uniqid, $objFormParam->getHashArray());
@@ -99,7 +99,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                     SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
                     SC_Helper_OAuth2::registerToken($_SESSION['userinfo']);
                     // 完了ページに移動させる。
-                    SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->objClient->short_name.'/complete');
+                    SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->short_name.'/complete');
                     SC_Response_Ex::actionExit();
                 }
                 break;
@@ -253,6 +253,10 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
      */
     protected function setDummyFormParamTo(SC_FormParam_Ex $objFormParam)
     {
+        // スペースが入っている場合があるため, エラーチェック前に除去する
+        $name01 = $objFormParam->getValue('name01');
+        $name01 = str_replace([" ", "　"], '', $name01);
+        $objFormParam->setValue('name01', $name01);
         $objFormParam->setValue('name02', '名');
         $objFormParam->setValue('kana01', 'セイ');
         $objFormParam->setValue('kana02', 'メイ');
@@ -270,5 +274,33 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $objFormParam->setValue('password02', 'password123');
         $objFormParam->setValue('reminder', 1);
         $objFormParam->setValue('reminder_answer', 'reminder_answer');
+    }
+
+    /**
+     * @param SC_FormParam_Ex $objFormParam
+     */
+    protected function setDummyFormCompleteParamTo(SC_FormParam_Ex $objFormParam)
+    {
+        // スペースが入っている場合があるため, エラーチェック前に除去する
+        $name01 = $objFormParam->getValue('name01');
+        $name01 = str_replace([" ", "　"], '', $name01);
+        $objFormParam->setValue('name01', $name01);
+        $objFormParam->setValue('name02', null);
+        $objFormParam->setValue('kana01', null);
+        $objFormParam->setValue('kana02', null);
+        $objFormParam->setValue('email02', $objFormParam->getValue('email'));
+        $objFormParam->setValue('zip01', null);
+        $objFormParam->setValue('zip02', null);
+        $objFormParam->setValue('pref', 0);
+        $objFormParam->setValue('addr01', null);
+        $objFormParam->setValue('addr02', null);
+        $objFormParam->setValue('tel01', null);
+        $objFormParam->setValue('tel02', null);
+        $objFormParam->setValue('tel03', null);
+        $objFormParam->setValue('sex', 0);
+        $objFormParam->setValue('password', 'password123');
+        $objFormParam->setValue('password02', 'password123');
+        $objFormParam->setValue('reminder', 1);
+        $objFormParam->setValue('reminder_answer', null);
     }
 }

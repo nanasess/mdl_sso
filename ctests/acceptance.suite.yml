@@ -11,6 +11,7 @@ modules:
         - WebDriver
         - MailCatcher
         - Asserts
+        - Db
     config:
         PhpBrowser:
             url: 'http://localhost:8085/'
@@ -25,10 +26,19 @@ modules:
                 unexpectedAlertBehaviour: 'accept'
                 elementScrollBehavior: 1
                 chromeOptions:
-                  args: ["disable-dev-shm-usage", "no-sandbox", "disable-infobars", "headless", "disable-gpu"]
+                  args:
+                    - disable-dev-shm-usage
+                    - no-sandbox
+                    - disable-infobars
+#                    - headless
+                    - disable-gpu
         MailCatcher:
             url: 'http://127.0.0.1'
             port: '1080'
+        Db:
+            dsn: %DB%:host=%DBSERVER%;dbname=%DBNAME%
+            user: %DBUSER%
+            password: %DBPASS%
 
 env:
     travis:
