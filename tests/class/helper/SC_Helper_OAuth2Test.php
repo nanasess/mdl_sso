@@ -116,7 +116,6 @@ class SC_Helper_OAuth2Test extends Common_TestCase
 
     public function testRegisterUserInfo()
     {
-        $this->markTestIncomplete();
         $objClient = SC_Helper_OAuth2::getOAuth2Client('DUMMY');
         $arrUserInfo = [
             'oauth2_client_id' => $objClient->oauth2_client_id,

@@ -149,7 +149,20 @@ class SC_Helper_OAuth2
 
     public static function registerUserInfo(array $arrUserInfo)
     {
-        $arrUserInfo['updated_at'] = new DateTime();
-        return $arrUserInfo;
+        $objQuery = SC_Query_Ex::getSingletonInstance();
+        $arrExistUserInfo = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        $arrUserInfo['updated_at'] = 'CURRENT_TIMESTAMP';
+        if (SC_Utils_Ex::isBlank($arrExistUserInfo)) {
+            $r = $objQuery->insert('dtb_oauth2_openid_userinfo', $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo', $arrUserInfo));
+            $objQuery->insert('dtb_oauth2_openid_userinfo_address',
+                              [
+                                  'oauth2_client_id' => $arrUserInfo['oauth2_client_id'],
+                                  'customer_id' => $arrUserInfo['customer_id']
+                              ]
+            );
+        } else {
+            $objQuery->update('dtb_oauth2_openid_userinfo', $arrUserInfo, 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        }
+        return $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
     }
 }

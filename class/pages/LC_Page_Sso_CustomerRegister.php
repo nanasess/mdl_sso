@@ -86,7 +86,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
                 if (empty($this->arrErr)) {
                     $this->setDummyFormCompleteParamTo($objFormParam);
-                    SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
+                    $customer_id = SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
 
                     $this->lfSendMail($uniqid, $objFormParam->getHashArray());
 
@@ -94,9 +94,9 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                     $objCustomer = new SC_Customer_Ex();
                     $objCustomer->setLogin($objFormParam->getValue('email'));
 
-                    $_SESSION['registered_customer_id'] = $customer_id = SC_Helper_Customer_Ex::sfGetCustomerId($uniqid);
+                    $_SESSION['registered_customer_id'] = $customer_id;
                     $_SESSION['userinfo']['customer_id'] = $customer_id;
-                    SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
+                    $userInfo = SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
                     SC_Helper_OAuth2::registerToken($_SESSION['userinfo']);
                     // 完了ページに移動させる。
                     SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->short_name.'/complete');
@@ -152,7 +152,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
      * @access private
      * @return void
      */
-    public function lfSendMail($uniqid, $arrForm)
+    public function lfSendMail($customer_id, $arrForm)
     {
         $CONF           = SC_Helper_DB_Ex::sfGetBasisData();
 
@@ -160,7 +160,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $objMailText->setPage($this);
         $objMailText->assign('CONF', $CONF);
         $objMailText->assign('name01', $arrForm['name01']);
-        $objMailText->assign('uniqid', $uniqid);
+        $objMailText->assign('customer_id', $customer_id);
         $objMailText->assignobj($this);
 
         $objHelperMail  = new SC_Helper_Mail_Ex();
@@ -244,7 +244,6 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $CONF = SC_Helper_DB_Ex::sfGetBasisData();
         $arrResults['point'] = $CONF['welcome_point'];
 
-        // TODO 姓名の間にスペースがあったら name01, name02 に分割する
         return $arrResults;
     }
 
