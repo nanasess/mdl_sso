@@ -46,7 +46,6 @@ class AuthorizationCodeFlowCest
         $I->assertNotNull($email);
         $I->selectOption('input[name=mailmaga_flg]', 'HTMLメール');
         $I->click(['xpath' => '//*[@id="form1"]/div/ul/li[2]/a']); // 確認画面へ
-
         $I->expect('会員登録内容を確認します');
         $I->see('下記の内容で送信してもよろしいでしょうか？');
         $I->click('#send');
@@ -56,5 +55,6 @@ class AuthorizationCodeFlowCest
         $I->click('//*[@id="complete_area"]/div[2]/ul/li/a'); // TOPページへ
 
         $I->seeInDatabase('dtb_customer', ['email' => $email]);
+        $I->see('ようこそ '.$name);
     }
 }

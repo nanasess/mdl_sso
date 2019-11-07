@@ -81,7 +81,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                 }
                 break;
             case 'complete':
-                $this->setDummyFormParamTo($objFormParam);
+                $this->setDummyFormParamTo($objFormParam, true);
 
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
                 if (empty($this->arrErr)) {
@@ -250,12 +250,17 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
     /**
      * @param SC_FormParam_Ex $objFormParam
+     * @param bool $is_complete
      */
-    protected function setDummyFormParamTo(SC_FormParam_Ex $objFormParam)
+    protected function setDummyFormParamTo(SC_FormParam_Ex $objFormParam, $is_complete = false)
     {
         // スペースが入っている場合があるため, エラーチェック前に除去する
         $name01 = $objFormParam->getValue('name01');
         $name01 = str_replace([" ", "　"], '', $name01);
+        // XXX 登録完了時に姓名を分割したいので, 一旦 reminder_answer に入れておく
+        if (!$is_complete) {
+            $objFormParam->setValue('reminder_answer', $objFormParam->getValue('name01'));
+        }
         $objFormParam->setValue('name01', $name01);
         $objFormParam->setValue('name02', '名');
         $objFormParam->setValue('kana01', 'セイ');
@@ -273,7 +278,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $objFormParam->setValue('password', 'password123');
         $objFormParam->setValue('password02', 'password123');
         $objFormParam->setValue('reminder', 1);
-        $objFormParam->setValue('reminder_answer', 'reminder_answer');
+
     }
 
     /**
@@ -281,11 +286,11 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
      */
     protected function setDummyFormCompleteParamTo(SC_FormParam_Ex $objFormParam)
     {
-        // スペースが入っている場合があるため, エラーチェック前に除去する
-        $name01 = $objFormParam->getValue('name01');
-        $name01 = str_replace([" ", "　"], '', $name01);
+        // スペースが含まれる場合は姓名を分割する
+        $name = $objFormParam->getValue('reminder_answer');
+        list($name01, $name02) = explode(' ',  str_replace("　", ' ', $name));
         $objFormParam->setValue('name01', $name01);
-        $objFormParam->setValue('name02', null);
+        $objFormParam->setValue('name02', $name02);
         $objFormParam->setValue('kana01', null);
         $objFormParam->setValue('kana02', null);
         $objFormParam->setValue('email02', $objFormParam->getValue('email'));
