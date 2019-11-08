@@ -59,6 +59,6 @@ class AuthorizationCodeFlowCest
         $customer_id = $I->grabFromDatabase('dtb_customer', 'customer_id', ['email' => $email]);
         $I->seeInDatabase('dtb_oauth2_openid_userinfo', ['customer_id' => $customer_id]);
         $I->seeInDatabase('dtb_oauth2_openid_userinfo_address', ['customer_id' => $customer_id]);
-        // $I->seeInDatabase('dtb_oauth2_token', ['customer_id' => $customer_id]);
+        $I->seeInDatabase('dtb_oauth2_token', ['customer_id' => $customer_id]);
     }
 }
