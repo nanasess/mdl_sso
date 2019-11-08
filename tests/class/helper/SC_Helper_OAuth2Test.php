@@ -130,6 +130,21 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $this->assertNotNull($actual['updated_at']);
     }
 
-    public function registerCustomer()
-    {}
+    public function testRegisterToken()
+    {
+        $objClient = SC_Helper_OAuth2::getOAuth2Client('DUMMY');
+        $arrToken = [
+            'oauth2_client_id' => $objClient->oauth2_client_id,
+            'customer_id' => $this->faker->randomNumber(),
+            'access_token' => $this->faker->uuid,
+            'refresh_token' => $this->faker->uuid,
+            'token_type' => 'Bearer',
+            'expires_in' => $this->faker->unixTime(),
+            'create_date' => 'CURRENT_TIMESTAMP',
+            'update_date' => 'CURRENT_TIMESTAMP',
+            'scope' => 'profile openid'
+        ];
+        $actual = SC_Helper_OAuth2::registerToken($arrToken);
+        $this->assertNotNull($actual['access_token']);
+    }
 }
