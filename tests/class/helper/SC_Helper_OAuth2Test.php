@@ -120,7 +120,7 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $arrUserInfo = [
             'oauth2_client_id' => $objClient->oauth2_client_id,
             'customer_id' => $this->faker->randomNumber(),
-            'sub' => 'user_id',
+            'sub' => $this->faker->uuid,
             'name' => $this->faker->name,
             'email' => $this->faker->safeEmail,
             'postal_code' => $this->faker->postcode
@@ -128,6 +128,10 @@ class SC_Helper_OAuth2Test extends Common_TestCase
 
         $actual = SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
         $this->assertNotNull($actual['updated_at']);
+        foreach (['oauth2_client_id', 'customer_id', 'sub', 'name', 'email'] as $claim) {
+            $this->assertEquals($arrUserInfo[$claim], $actual[$claim]);
+        }
+        $this->assertEquals($arrUserInfo['postal_code'], $actual['address']['postal_code']);
     }
 
     public function testRegisterToken()
