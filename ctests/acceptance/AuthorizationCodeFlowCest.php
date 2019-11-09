@@ -60,5 +60,15 @@ class AuthorizationCodeFlowCest
         $I->seeInDatabase('dtb_oauth2_openid_userinfo', ['customer_id' => $customer_id]);
         $I->seeInDatabase('dtb_oauth2_openid_userinfo_address', ['customer_id' => $customer_id]);
         $I->seeInDatabase('dtb_oauth2_token', ['customer_id' => $customer_id]);
+
+        $I->expect('会員登録完了メールを確認する');
+
+        $I->expect('refresh token を使用してアクセストークンを取得する');
+
+        $I->expect('有効期限切れを確認する');
+
+        $I->expect('再ログインする');
+
+        $I->expect('ログアウトする');
     }
 }
