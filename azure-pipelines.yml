@@ -19,6 +19,7 @@ variables:
   USER: root
   DBPASS: password
   DBUSER: root
+  DBSERVER: 127.0.0.1
 
 strategy:
     matrix:
