@@ -157,7 +157,7 @@ class SC_Helper_OAuth2
                 'oauth2_client_id = ? AND customer_id = ?', [$arrToken['oauth2_client_id'], $arrToken['customer_id']]
             );
         }
-        return $objQuery->getRow('*', 'dtb_oauth2_token', 'oauth2_client_id = ? AND customer_id = ?', [$arrToken['oauth2_client_id'], $arrToken['customer_id']]);
+        return self::getStoredToken($arrToken['oauth2_client_id'], $arrToken['customer_id']);
     }
 
     public static function registerUserInfo(array $arrUserInfo)
@@ -197,5 +197,21 @@ class SC_Helper_OAuth2
         $result = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
         $result['address'] = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo_address', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
         return $result;
+    }
+
+    /**
+     * @param int $oauth2_client_id
+     * @param int $customer_id
+     * @return AccessToken|null
+     */
+    public static function getStoredToken($oauth2_client_id, $customer_id)
+    {
+        $objQuery = SC_Query_Ex::getSingletonInstance();
+        $token = $objQuery->getRow('*', 'dtb_oauth2_token', 'oauth2_client_id = ? AND customer_id = ?', [$oauth2_client_id, $customer_id]);
+        if ($token) {
+            return new AccessToken($token);
+        }
+
+        return null;
     }
 }

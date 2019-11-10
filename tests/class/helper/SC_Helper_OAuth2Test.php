@@ -149,6 +149,6 @@ class SC_Helper_OAuth2Test extends Common_TestCase
             'scope' => 'profile openid'
         ];
         $actual = SC_Helper_OAuth2::registerToken($arrToken);
-        $this->assertNotNull($actual['access_token']);
+        $this->assertNotNull($actual->access_token);
     }
 }
