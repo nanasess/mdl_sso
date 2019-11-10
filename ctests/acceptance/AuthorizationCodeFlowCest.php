@@ -36,6 +36,8 @@ class AuthorizationCodeFlowCest
     public function testSuccessAuthorizationCodeResponse(AcceptanceTester $I)
     {
         $I->wantTo('Success Authorization code response');
+        $I->resetEmails();
+
         $I->amOnPage('/sso/DUMMY/redirect?code=authorization_code');
         $I->DontSeeElement('.error');
 
@@ -62,6 +64,8 @@ class AuthorizationCodeFlowCest
         $I->seeInDatabase('dtb_oauth2_token', ['customer_id' => $customer_id]);
 
         $I->expect('会員登録完了メールを確認する');
+        $I->seeEmailCount(1);
+        $I->seeInLastEmailSubjectTo($email, '会員登録のご完了');
 
         $I->expect('refresh token を使用してアクセストークンを取得する');
 
