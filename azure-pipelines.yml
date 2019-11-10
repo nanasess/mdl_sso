@@ -88,13 +88,14 @@ steps:
     php data/vendor/bin/phpunit --log-junit $(Build.SourcesDirectory)/tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
   displayName: 'Run to PHPUnit'
 - script: |
+    export DISPLAY=:99
+    $(Build.SourcesDirectory)/chromedriver --url-base=/wd/hub &
     /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     echo ">>> Started xvfb"
   displayName: Start xvfb
 - script: |
     cd ../ec-cube2
     php data/vendor/bin/codecept build
-    $(Build.SourcesDirectory)/chromedriver --url-base=/wd/hub &
     php -S 0.0.0.0:8085 -t html/ html/router.php &
     php -S 0.0.0.0:8086 -t html/ html/router.php &
     php --version
