@@ -50,7 +50,7 @@ steps:
     sudo mysql -uroot -proot -e "use mysql; update user set authentication_string=PASSWORD('password') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
     sudo mysql -u root -ppassword -e 'create database eccube_db;'
     sudo mysql -u root -ppassword -e "SET global sql_mode = '';"
-    wget -c -nc --retry-connrefused --tries=0 http://chromedriver.storage.googleapis.com/2.43/chromedriver_linux64.zip
+    wget -c -nc --retry-connrefused --tries=0 http://chromedriver.storage.googleapis.com/77.0.3865.40/chromedriver_linux64.zip
     unzip -o -q chromedriver_linux64.zip
     sudo chmod +x ./chromedriver
     docker pull schickling/mailcatcher
