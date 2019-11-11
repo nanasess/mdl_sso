@@ -52,6 +52,7 @@ case "${DBTYPE}" in
 esac
 
 echo "linking plugin..."
+ls -al $SCRIPT_DIR
 cd $SCRIPT_DIR/../../../../downloads/plugin/
 ln -s ../../vendor/nanasess/mdl_sso/plugins/Sso Sso
 ls -al $SCRIPT_DIR/../../../../downloads/plugin
