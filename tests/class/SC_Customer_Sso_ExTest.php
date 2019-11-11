@@ -65,7 +65,7 @@ class SC_Customer_Sso_ExTest extends Common_TestCase
             'access_token' => $this->faker->uuid,
             'refresh_token' => $this->faker->uuid,
             'token_type' => 'Bearer',
-            'expires_in' => 3600,
+            'expires_in' => 60 * 60 * 24,
             'create_date' => 'CURRENT_TIMESTAMP',
             'update_date' => 'CURRENT_TIMESTAMP',
             'scope' => 'profile openid'
