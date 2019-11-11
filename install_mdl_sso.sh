@@ -53,8 +53,8 @@ esac
 
 echo "linking plugin..."
 ls -al $SCRIPT_DIR
-cd $SCRIPT_DIR/../../../../downloads/plugin/
+cd $SCRIPT_DIR/../../../downloads/plugin/
 ln -s ../../vendor/nanasess/mdl_sso/plugins/Sso Sso
-ls -al $SCRIPT_DIR/../../../../downloads/plugin
+ls -al $SCRIPT_DIR/../../../downloads/plugin
 
 echo "Finished Successful!"
