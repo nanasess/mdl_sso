@@ -117,6 +117,44 @@ class SC_Helper_OAuth2
     }
 
     /**
+     * Access token を更新する.
+     *
+     * @param GuzzleHttp\Client $httpClient
+     * @param OAuth2Client $objClient
+     * @param string $refresh_token
+     * @return array
+     */
+    public static function refreshAccessToken(GuzzleHttp\Client $httpClient, OAuth2Client $objClient, $refresh_token)
+    {
+        $params = [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refresh_token,
+            'client_id' => $objClient->client_id,
+            'client_secret' => $objClient->client_secret
+        ];
+
+        try {
+            $headers = [];
+
+            GC_Utils_Ex::gfPrintLog($objClient->token_endpoint.' にPOSTします '.var_export($headers, true).var_export($params, true));
+            $response = $httpClient->request(
+                'POST',
+                $objClient->token_endpoint,
+                [
+                    'headers' => $headers,
+                    'json' => $params,
+                    'timeout' => 5,
+                    'connect_timeout' => 5
+                ]
+            );
+
+            return json_decode($response->getBody(), true);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
      * UserInfo を取得する.
      *
      * @param GuzzleHttp\Client $httpClient

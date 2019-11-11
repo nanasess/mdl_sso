@@ -158,6 +158,7 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                     // login
                     $objCustomer = new SC_Customer_Ex();
                     $objCustomer->setLogin($arrCustomer['email']);
+                    $objCustomer->setOAuth2ClientId($this->objClient->oauth2_client_id);
                     unset($_SESSION['state']);
                     unset($_SESSION['token']);
                     // TODO update userinfo

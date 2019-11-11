@@ -151,4 +151,43 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $actual = SC_Helper_OAuth2::registerToken($arrToken);
         $this->assertNotNull($actual->access_token);
     }
+
+    public function testRefreshToken()
+    {
+        $access_token = json_encode(
+            [
+                'access_token' => 'token',
+                'refresh_token' => 'refresh',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+                'scope' => $this->objClient->scope
+            ]);
+        $mock = new GuzzleHttp\Handler\MockHandler([
+            new GuzzleHttp\Psr7\Response(200, ['Content-Type' => 'application/json'], $access_token)
+        ]);
+        $handler = GuzzleHttp\HandlerStack::create($mock);
+        $mockClient = new GuzzleHttp\Client(['handler' => $handler]);
+
+        $expected = json_decode($access_token, true);
+        $actual = SC_Helper_OAuth2::refreshAccessToken($mockClient, $this->objClient, 'refresh_token');
+        $this->assertEquals($expected, $actual);
+    }
+
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessageRegExp /invalid_grant/
+     */
+    public function testRefreshTokenWithFailure()
+    {
+        $mock = new GuzzleHttp\Handler\MockHandler([
+            new GuzzleHttp\Psr7\Response(
+                400, ['Content-Type' => 'application/json'],
+                json_encode(['error' => 'invalid_grant', 'error_description' => 'invalid']))
+        ]);
+        $handler = GuzzleHttp\HandlerStack::create($mock);
+        $mockClient = new GuzzleHttp\Client(['handler' => $handler]);
+
+        $actual = SC_Helper_OAuth2::refreshAccessToken($mockClient, $this->objClient, 'refresh_token');
+        $this->assertNotNull($actual); // 例外がスローされるため到達しないはず
+    }
 }
