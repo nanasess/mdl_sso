@@ -6,7 +6,9 @@
 # see also https://gist.github.com/zanechua/a67ed1de1fff20639edb121bdb0b6e4d
 
 trigger:
-- master
+  branches:
+    include:
+      - '*'
 
 pool:
   vmImage: 'ubuntu-latest'
