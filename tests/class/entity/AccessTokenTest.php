@@ -35,7 +35,7 @@ class AccessTokenTest extends Common_TestCase
     {
         $this->token['expires_in'] = 100;
         $now = new DateTime();
-        $this->token['create_date'] = $now->format('Y-m-d H:i:s');
+        $this->token['update_date'] = $now->format('Y-m-d H:i:s');
         $expected = $now->add(new DateInterval('PT100S'));
         $objToken = new AccessToken($this->token);
 
@@ -58,7 +58,7 @@ class AccessTokenTest extends Common_TestCase
     public function testIsExpired()
     {
         $this->token['expires_in'] = 10;
-        $this->token['create_date'] = new DateTime('-1 minutes');
+        $this->token['update_date'] = new DateTime('-1 minutes');
         $objToken = new AccessToken($this->token);
         $this->assertTrue($objToken->isExpired());
     }
@@ -66,7 +66,7 @@ class AccessTokenTest extends Common_TestCase
     public function testIsNotExpired()
     {
         $this->token['expires_in'] = 10;
-        $this->token['create_date'] = new DateTime();
+        $this->token['update_date'] = new DateTime();
         $objToken = new AccessToken($this->token);
         $this->assertFalse($objToken->isExpired());
     }
