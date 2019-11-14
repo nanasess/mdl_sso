@@ -73,10 +73,14 @@ class AccessToken extends AbstractEntity
      */
     public function getExpire()
     {
-        if (!$this->getUpdateDate() instanceof DateTime) {
-            return new DateTime(date('Y-m-d H:i:s', 0));
+        $timestamp = 0;
+        if ($this->getUpdateDate() instanceof DateTime) {
+            $timestamp = $this->getUpdateDate()->getTimestamp();
         }
-        return $this->getUpdateDate()->add(new DateInterval('PT'.$this->expires_in.'S'));
+
+        $expire = new DateTime();
+        $expire->setTimestamp($timestamp + $this->expires_in);
+        return $expire;
     }
 
     /**

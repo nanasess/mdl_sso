@@ -52,7 +52,7 @@ class AccessTokenTest extends Common_TestCase
         $actual = $objToken->getExpire();
         $this->assertNull($objToken->getCreateDate());
         $this->assertNull($objToken->getUpdateDate());
-        $this->assertEquals('0', $actual->format('U'));
+        $this->assertEquals($this->token['expires_in'], $actual->getTimestamp());
     }
 
     public function testIsExpired()
