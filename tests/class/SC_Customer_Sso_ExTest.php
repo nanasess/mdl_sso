@@ -74,4 +74,27 @@ class SC_Customer_Sso_ExTest extends Common_TestCase
 
         $this->assertTrue($objCustomer->isLoginSuccess());
     }
+
+    public function testIsLoginOAuth2CustomerWithExpired()
+    {
+        $email = $this->faker->safeEmail;
+        $customer_id = $this->objGenerator->createCustomer($email);
+        $objCustomer = new SC_Customer_Ex();
+        $objCustomer->setLogin($email);
+        $objCustomer->setOAuth2ClientId($this->objClient->oauth2_client_id);
+
+        $arrToken = [
+            'oauth2_client_id' => $this->objClient->oauth2_client_id,
+            'customer_id' => $customer_id,
+            'access_token' => $this->faker->uuid,
+            'refresh_token' => null,
+            'token_type' => 'Bearer',
+            'expires_in' => -10000, // expired
+            'create_date' => 'CURRENT_TIMESTAMP',
+            'update_date' => 'CURRENT_TIMESTAMP',
+            'scope' => 'profile openid'
+        ];
+        SC_Helper_OAuth2::registerToken($arrToken);
+        $this->assertFalse($objCustomer->isLoginSuccess());
+    }
 }

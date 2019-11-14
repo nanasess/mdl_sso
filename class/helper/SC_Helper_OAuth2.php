@@ -19,6 +19,22 @@ class SC_Helper_OAuth2
     }
 
     /**
+     * IDを使用して OAuth2Client を取得します.
+     *
+     * @param int $id
+     * @return OAuth2Client
+     */
+    public static function getOAuth2ClientById($id)
+    {
+        $objQuery = SC_Query_Ex::getSingletonInstance();
+        $arrClient = $objQuery->getRow('*', 'dtb_oauth2_client', 'oauth2_client_id = ?', [$id]);
+        if (SC_Utils_Ex::isBlank($arrClient)) {
+            trigger_error('OAuth2.0 Client not found', E_USER_ERROR);
+        }
+        return new OAuth2Client($arrClient);
+    }
+
+    /**
      * 略称の妥当性を検証します.
      *
      * @param string $short_name

@@ -13,6 +13,9 @@ class SC_Helper_OAuth2Test extends Common_TestCase
     /** @var string */
     const CLIENT_NAME = 'DUMMY';
 
+    /** @var int */
+    const CLIENT_ID = 999999;
+
     protected function setUp()
     {
         parent::setUp();
@@ -48,6 +51,12 @@ class SC_Helper_OAuth2Test extends Common_TestCase
     public function testGetOAuth2Client()
     {
         $actual = SC_Helper_OAuth2::getOAuth2Client(self::CLIENT_NAME);
+        $this->assertInstanceOf('OAuth2Client', $actual);
+    }
+
+    public function testGetOAuth2ClientId()
+    {
+        $actual = SC_Helper_OAuth2::getOAuth2ClientById(self::CLIENT_ID);
         $this->assertInstanceOf('OAuth2Client', $actual);
     }
 
