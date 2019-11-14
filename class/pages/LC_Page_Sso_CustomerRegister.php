@@ -93,9 +93,11 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                     // ログイン状態にする
                     $objCustomer = new SC_Customer_Ex();
                     $objCustomer->setLogin($objFormParam->getValue('email'));
+                    $objCustomer->setOAuth2ClientId($_SESSION['token']['oauth2_client_id']);
 
                     $_SESSION['registered_customer_id'] = $customer_id;
                     $_SESSION['userinfo']['customer_id'] = $customer_id;
+                    $_SESSION['token']['customer_id'] = $customer_id;
                     $userInfo = SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
                     SC_Helper_OAuth2::registerToken($_SESSION['token']);
                     // 完了ページに移動させる。

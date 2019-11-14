@@ -86,7 +86,7 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                 //$objQuery->insert('dtb_oauth2_token', $arrToken);
                 // $userInfo = $client->post($arrClient['token_endpoint'], array(), $params)->json();
                 $userInfo = SC_Helper_OAuth2::getUserInfo($this->httpClient, $this->objClient, $token['access_token']);
-
+                $arrUserInfo = [];
                 switch ($this->short_name) {
                     case 'AMZN':
                         $arrUserInfo = [
@@ -150,22 +150,29 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                 }
                 GC_Utils_Ex::gfPrintLog('UserInfo を取得しました '.print_r($arrUserInfo, true));
                 $objQuery = SC_Query_Ex::getSingletonInstance();
+                GC_Utils_Ex::gfPrintLog('oauth2_client_id: '.$this->objClient->oauth2_client_id.' sub:'.$arrUserInfo['sub']);
+                // $userInfo = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND sub = ?',
+                //                               [$this->objClient->oauth2_client_id, $arrUserInfo['sub']]);
+                // GC_Utils_Ex::gfPrintLog(print_r($userInfo, true));
+
+                $arrUserInfo['oauth2_client_id'] = $this->objClient->oauth2_client_id;
                 $arrCustomer = $objQuery->getRow('*', 'dtb_customer',
                                                  'customer_id = (SELECT customer_id FROM dtb_oauth2_openid_userinfo WHERE oauth2_client_id = ? AND sub = ?)',
-                                                 [$arrClient['oauth2_client_id'], $arrUserInfo['sub']]);
+                                                 [$this->objClient->oauth2_client_id, $arrUserInfo['sub']]);
                 if (!SC_Utils_Ex::isBlank($arrCustomer)) {
                     GC_Utils_Ex::gfPrintLog('Customer が存在するためログインします customer_id='.$arrCustomer['customer_id']);
                     // login
                     $objCustomer = new SC_Customer_Ex();
                     $objCustomer->setLogin($arrCustomer['email']);
                     $objCustomer->setOAuth2ClientId($this->objClient->oauth2_client_id);
+                    $arrUserInfo['customer_id'] = $arrCustomer['customer_id'];
+                    $_SESSION['token']['customer_id'] = $arrCustomer['customer_id'];
+                    SC_Helper_OAuth2::registerToken($_SESSION['token']);
                     unset($_SESSION['state']);
                     unset($_SESSION['token']);
-                    // TODO update userinfo
-                    $objQuery->update('dtb_oauth2_openid_userinfo', $arrUserInfo, 'oauth2_client_id = ? AND customer_id = ?',
-                                      [$arrClient['oauth2_client_id'], $arrCustomer['customer_id']]);
+                    SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
 
-                    $this->sendRedirect();
+                    SC_Response_Ex::sendRedirect('/');
                     SC_Response_Ex::actionExit();
                 } else {
                     GC_Utils_Ex::gfPrintLog('Customer が存在しないため、登録画面に遷移します '.print_r($arrToken, true));

@@ -25,21 +25,40 @@ return $routes = function (FastRoute\RouteCollector $r) {
 
     if ('cli-server' === php_sapi_name()) {
         $r->addRoute(['POST'], '/sso/{short_name}/token', function (array $vars) {
-            echo json_encode(
+            $json = file_get_contents('php://input');
+            $errors = json_encode(
                 [
-                    'access_token' => 'token',
-                    'refresh_token' => 'refresh',
-                    'expires_in' => 3600,
-                    'token_type' => 'Bearer',
-                    'scope' => 'profile'
-                ]);
+                    'error' => 'invalid_grant',
+                    'error_description' => 'invalid'
+                ]
+            );
+            if ($json !== false) {
+                $arrJson = json_decode($json, true);
+                if ($arrJson !== false && 'not_refresh' !== $arrJson['refresh_token']) {
+                    echo json_encode(
+                        [
+                            'access_token' => isset($arrJson['code']) ? $arrJson['code'] : 'access_token',
+                            'refresh_token' => 'refresh',
+                            'expires_in' => 3600,
+                            'token_type' => 'Bearer',
+                            'scope' => 'profile'
+                        ]);
+                } else {
+                    http_response_code(400);
+                    echo $errors;
+                }
+            }
         });
         $r->addRoute(['GET', 'POST'], '/sso/{short_name}/userinfo', function (array $vars) {
+            $user_id = $faker->uuid;
+            if (isset($_SERVER['HTTP_AUTHORIZATION']))  {
+                $user_id = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
+            }
             /** @var Faker\Generator $faker */
             $faker = Faker\Factory::create('ja_JP');
             echo json_encode(
                 [
-                    'user_id' => $faker->uuid,
+                    'user_id' => $user_id,
                     'name' => $faker->name,
                     'email' => microtime(true).'.'.$faker->safeEmail,
                     'postal_code' => $faker->postcode
@@ -50,4 +69,3 @@ return $routes = function (FastRoute\RouteCollector $r) {
         phpinfo();
     });
 };
-
