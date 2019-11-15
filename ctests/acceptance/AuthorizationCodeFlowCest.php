@@ -104,5 +104,8 @@ class AuthorizationCodeFlowCest
         $I->see('ようこそ '.$name);
 
         $I->expect('ログアウトする');
+        $I->click(['xpath' => '//*[@id="login_form"]/div/p[2]/input']); // ログアウト
+        $I->amOnPage('/mypage');
+        $I->see('MYページ(ログイン)');
     }
 }
