@@ -31,6 +31,12 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
     public function init()
     {
         parent::init();
+        if (!is_object($this->httpClient)) {
+            $this->httpClient = new GuzzleHttp\Client([
+                'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()
+            ]);
+        }
+        $this->tpl_title = '会員登録';
         $masterData         = new SC_DB_MasterData_Ex();
         $this->arrPref      = $masterData->getMasterData('mtb_pref');
         $this->arrJob       = $masterData->getMasterData('mtb_job');
@@ -47,6 +53,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
         $this->httpCacheControl('nocache');
         $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register.tpl'));
+        // $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register_kiyaku_only.tpl'));
     }
 
     /**
@@ -70,11 +77,14 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         SC_Helper_Customer_Ex::sfCustomerEntryParam($objFormParam);
         $objFormParam->setParam($_POST);
 
+        $password = SC_Utils_Ex::sfGetRandomString(16);
+        $password .= 'abc123';
+
         switch ($this->getMode()) {
             case 'confirm':
                 $this->setDummyFormParamTo($objFormParam);
-
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
+
                 // 入力エラーなし
                 if (empty($this->arrErr)) {
                     $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/confirm.tpl'));
@@ -86,6 +96,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
                 if (empty($this->arrErr)) {
                     $this->setDummyFormCompleteParamTo($objFormParam);
+
                     $customer_id = SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
 
                     $this->lfSendMail($customer_id, $objFormParam->getHashArray());
@@ -223,7 +234,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
      *
      * @param SC_FormParam $objFormParam
      * @access private
-     * @return $arrResults
+     * @return array
      */
     public function lfMakeSqlVal(&$objFormParam)
     {

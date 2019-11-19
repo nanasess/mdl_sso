@@ -24,6 +24,22 @@ return $routes = function (FastRoute\RouteCollector $r) {
     });
 
     if ('cli-server' === php_sapi_name()) {
+        $r->addRoute(['GET'], '/sso/login', function (array $vars) {
+            $objCustomer = new SC_Customer_Ex();
+            if ($objCustomer->isLoginSuccess()) {
+                header('Location: /');
+            } else {
+                echo file_get_contents(__DIR__.'/templates/tests/login.html');
+            }
+        });
+        $r->addRoute(['GET'], '/sso/complete', function (array $vars) {
+            $objCustomer = new SC_Customer_Ex();
+            if (!$objCustomer->isLoginSuccess()) {
+                header('Location: /');
+            } else {
+                echo file_get_contents(__DIR__.'/templates/tests/complete.html');
+            }
+        });
         $r->addRoute(['POST'], '/sso/{short_name}/token', function (array $vars) {
             $json = file_get_contents('php://input');
             $errors = json_encode(

@@ -13,7 +13,7 @@ params:
 modules:
     config:
         Db:
-            dsn: ''
-            user: ''
-            password: ''
+            dsn: '%DB%:host=%DBSERVER%;dbname=%DBNAME%'
+            user: '%DBUSER%'
+            password: '%DBPASS%'
             dump: ctests/_data/dump.sql

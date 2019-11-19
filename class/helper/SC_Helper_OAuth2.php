@@ -196,6 +196,32 @@ class SC_Helper_OAuth2
         return $userinfo;
     }
 
+    /**
+     * 郵便番号から住所を取得する.
+     *
+     * @param GuzzleHttp\Client $httpClient
+     * @param string $zip01
+     * @param string $zip02
+     * @return array
+     * @see https://madefor.github.io/postal-code-api/
+     */
+    public static function getAddressByZipcode(GuzzleHttp\Client $httpClient, $zip01, $zip02)
+    {
+        try {
+            $response = $httpClient->request('GET', 'https://madefor.github.io/postal-code-api/api/v1/'.$zip01.'/'.$zip02.'.json', ['timeout' => 5, 'connect_timeout' => 5]);
+            $arrZipcode = json_decode($response->getBody(), true);
+            return [
+                'pref_id' => $arrZipcode['data'][0]['prefcode'],
+                'pref' => $arrZipcode['data'][0]['ja']['prefecture'],
+                'addr01' => $arrZipcode['data'][0]['ja']['address1'],
+                'addr02' => $arrZipcode['data'][0]['ja']['address2'],
+            ];
+        } catch (\Exception $e) {
+            return [];
+        }
+
+    }
+
     public static function registerToken(array $arrToken)
     {
         $objQuery = SC_Query_Ex::getSingletonInstance();
@@ -214,6 +240,14 @@ class SC_Helper_OAuth2
         return self::getStoredToken($arrToken['oauth2_client_id'], $arrToken['customer_id']);
     }
 
+    /**
+     * Register to UserInfo.
+     *
+     * TODO Address claim support
+     *
+     * @param array<string,string> $arrUserInfo Array of the UserInfo
+     * @return array Registered the UserInfo.
+     */
     public static function registerUserInfo(array $arrUserInfo)
     {
         $objQuery = SC_Query_Ex::getSingletonInstance();

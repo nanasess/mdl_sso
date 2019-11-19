@@ -10,6 +10,9 @@ class SC_Helper_OAuth2Test extends Common_TestCase
     /** @var Faker\Generator */
     private $faker;
 
+    /** @var FixtureGenerator */
+    private $objGenerator;
+
     /** @var string */
     const CLIENT_NAME = 'DUMMY';
 
@@ -34,6 +37,7 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $this->objClient = new OAuth2Client($arrClient);
 
         $this->faker = Faker\Factory::create('ja_JP');
+        $this->objGenerator = new FixtureGenerator($this->objQuery);
     }
 
     public function testValidateShortName()
@@ -121,6 +125,31 @@ class SC_Helper_OAuth2Test extends Common_TestCase
         $expected = json_decode($userinfo, true);
         $actual = SC_Helper_OAuth2::getUserInfo($mockClient, $this->objClient, $access_token);
         $this->assertEquals($expected, $actual);
+    }
+
+    public function testGetAddressByZipCode()
+    {
+        $httpClient = new GuzzleHttp\Client([
+            'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()
+        ]);
+        $this->expected = [
+            'pref_id' => '23',
+            'pref' => '愛知県',
+            'addr01' => '西尾市',
+            'addr02' => '一色町治明'
+        ];
+        $this->actual = SC_Helper_OAuth2::getAddressByZipcode($httpClient, '444', '0426');
+        $this->verify();
+    }
+
+    public function testGetAddressByZipCodeWithEmpty()
+    {
+        $httpClient = new GuzzleHttp\Client([
+            'verify' => Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()
+        ]);
+        $this->expected = [];
+        $this->actual = SC_Helper_OAuth2::getAddressByZipcode($httpClient, '', '0426');
+        $this->verify();
     }
 
     public function testRegisterUserInfo()

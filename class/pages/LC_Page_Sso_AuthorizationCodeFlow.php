@@ -2,12 +2,6 @@
 
 class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
 {
-
-    /**
-     * @var GuzzleHttp\Client
-     */
-    protected $httpClient;
-
     /**
      * @var OAuth2Client
      */
@@ -150,6 +144,7 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                 }
                 GC_Utils_Ex::gfPrintLog('UserInfo を取得しました '.print_r($arrUserInfo, true));
                 $objQuery = SC_Query_Ex::getSingletonInstance();
+
                 GC_Utils_Ex::gfPrintLog('oauth2_client_id: '.$this->objClient->oauth2_client_id.' sub:'.$arrUserInfo['sub']);
                 // $userInfo = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND sub = ?',
                 //                               [$this->objClient->oauth2_client_id, $arrUserInfo['sub']]);
@@ -159,6 +154,7 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                 $arrCustomer = $objQuery->getRow('*', 'dtb_customer',
                                                  'customer_id = (SELECT customer_id FROM dtb_oauth2_openid_userinfo WHERE oauth2_client_id = ? AND sub = ?)',
                                                  [$this->objClient->oauth2_client_id, $arrUserInfo['sub']]);
+
                 if (!SC_Utils_Ex::isBlank($arrCustomer)) {
                     GC_Utils_Ex::gfPrintLog('Customer が存在するためログインします customer_id='.$arrCustomer['customer_id']);
                     // login
@@ -175,11 +171,13 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                     SC_Response_Ex::sendRedirect('/');
                     SC_Response_Ex::actionExit();
                 } else {
-                    GC_Utils_Ex::gfPrintLog('Customer が存在しないため、登録画面に遷移します '.print_r($arrToken, true));
                     // register Customer
                     $_SESSION['token'] = $arrToken;
+                    $arrUserInfo['oauth_client_id'] = $this->objClient->oauth2_client_id;
                     $_SESSION['userinfo'] = $arrUserInfo; // SESSION に保存しておいてリダイレクト後に登録する
+                    GC_Utils_Ex::gfPrintLog('Customer が存在しないため、登録画面に遷移します '.print_r($_SESSION['token'], true).print_r($_SESSION['userinfo'], true));
                     unset($_SESSION['state']);
+
                     SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->objClient->short_name.'/register');
                     SC_Response_Ex::actionExit();
                 }

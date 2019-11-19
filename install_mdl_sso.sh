@@ -45,7 +45,7 @@ case "${DBTYPE}" in
 	CONFIGPASS=$DBPASS
     fi
     echo "create table..."
-    echo "SET SESSION default_storage_engine = InnoDB; SET sql_mode = '';" |
+    echo "SET SESSION default_storage_engine = InnoDB; SET sql_mode = 'NO_ENGINE_SUBSTITUTION';" |
         cat - ${SQL_DIR}/create_table.sql |
         ${MYSQL} -h ${DBSERVER} -u ${DBUSER} ${PASSOPT} ${DBNAME}
 ;;

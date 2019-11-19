@@ -7,8 +7,9 @@ class AuthorizationCodeFlowCest
     {
     }
 
-    public function _after(AcceptanceTester $I)
+    public function _after(AcceptanceTester $I, \Codeception\Module\AcceptanceHelper $helper)
     {
+        $helper->deleteCustomer('email@example.com');
     }
 
     // tests
