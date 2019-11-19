@@ -19,7 +19,7 @@ variables:
   USER: root
   DBPASS: password
   DBUSER: root
-  DBSERVER: localhost
+  DBSERVER: 127.0.0.1
 
 strategy:
     matrix:
@@ -45,12 +45,12 @@ steps:
   displayName: 'Use PHP version $(phpVersion)'
 
 - script: |
-    sudo apt-get install -y build-essential debconf-utils screen mysql-server google-chrome-stable
-    sudo apt-get install -y unzip xvfb autogen autoconf libtool pkg-config nasm libgconf-2-4
+    sudo apt-fast install -y build-essential debconf-utils screen mysql-server google-chrome-stable
+    sudo apt-fast install -y unzip xvfb autogen autoconf libtool pkg-config nasm libgconf-2-4
     sudo mysql -uroot -proot -e "use mysql; update user set authentication_string=PASSWORD('password') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
     sudo mysql -u root -ppassword -e 'create database eccube_db;'
     sudo mysql -u root -ppassword -e "SET global sql_mode = '';"
-    wget -c -nc --retry-connrefused --tries=0 http://chromedriver.storage.googleapis.com/2.43/chromedriver_linux64.zip
+    wget -c -nc --retry-connrefused --tries=0 http://chromedriver.storage.googleapis.com/77.0.3865.40/chromedriver_linux64.zip
     unzip -o -q chromedriver_linux64.zip
     sudo chmod +x ./chromedriver
     docker pull schickling/mailcatcher
@@ -59,17 +59,17 @@ steps:
 
 - script: |
     cd ../
-    git clone https://github.com/EC-CUBE/eccube-2_13.git
+    git clone https://github.com/EC-CUBE/ec-cube2.git
   displayName: 'Clone to eccube'
 - task: CacheBeta@0
   inputs:
-#    key: '$(Build.SourcesDirectory)/../eccube-2_13/composer.lock'
+#    key: '$(Build.SourcesDirectory)/../ec-cube2/composer.lock'
     key: 'composer | $(Agent.OS)'
     path: '/home/vsts/.composer/cache'
   displayName: 'Caching to composer'
 
 - script: |
-    cd ../eccube-2_13
+    cd ../ec-cube2
     composer self-update || true
     composer config repositories.nanasess/mdl_sso path $(Build.SourcesDirectory)
     composer --ignore-platform-reqs require  guzzlehttp/guzzle "^6.3"
@@ -80,21 +80,22 @@ steps:
     cp -p ./data/vendor/nanasess/mdl_sso/router.php ./html/router.php
   displayName: "Setup to eccube"
 
-- script: cat ../eccube-2_13/data/config/config.php
+- script: cat ../ec-cube2/data/config/config.php
   displayName: 'display to config.php'
 - script: |
-    cd ../eccube-2_13
+    cd ../ec-cube2
     php --version
     php data/vendor/bin/phpunit --log-junit $(Build.SourcesDirectory)/tests/TEST-phpunit-junit.xml --bootstrap tests/require.php -c data/vendor/nanasess/mdl_sso/phpunit.xml.dist data/vendor/nanasess/mdl_sso/tests
   displayName: 'Run to PHPUnit'
 - script: |
+    export DISPLAY=:99
+    $(Build.SourcesDirectory)/chromedriver --url-base=/wd/hub &
     /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     echo ">>> Started xvfb"
   displayName: Start xvfb
 - script: |
-    cd ../eccube-2_13
+    cd ../ec-cube2
     php data/vendor/bin/codecept build
-    $(Build.SourcesDirectory)/chromedriver --url-base=/wd/hub &
     php -S 0.0.0.0:8085 -t html/ html/router.php &
     php -S 0.0.0.0:8086 -t html/ html/router.php &
     php --version

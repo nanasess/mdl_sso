@@ -67,3 +67,5 @@ CREATE UNIQUE INDEX IX_dtb_oauth2_openid_userinfo_sub ON dtb_oauth2_openid_useri
 
 -- DELETE FROM dtb_oauth2_client WHERE oauth2_client_id = 999999;
 INSERT INTO dtb_oauth2_client (oauth2_client_id, client_id, client_secret, app_name, authorize_endpoint, token_endpoint, userinfo_endpoint, create_date, update_date, del_flg, short_name, scope) VALUES (999999, 'dummy', 'dummy', 'DUMMY', 'http://localhost:8086/sso/DUMMY/authorize', 'http://localhost:8086/sso/DUMMY/token', 'http://localhost:8086/sso/DUMMY/userinfo', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 'DUMMY', 'profile');
+INSERT INTO dtb_plugin (plugin_id, plugin_name, plugin_code, class_name, enable, create_date, update_date) VALUES (999999999, 'Sso', 'Sso', 'Sso', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO dtb_plugin_hookpoint(plugin_hookpoint_id, plugin_id, hook_point, callback, create_date, update_date) VALUES (999999999, 999999999, 'loadClassFileChange', 'loadClassFileChange', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

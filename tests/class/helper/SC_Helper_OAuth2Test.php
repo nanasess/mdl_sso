@@ -16,6 +16,9 @@ class SC_Helper_OAuth2Test extends Common_TestCase
     /** @var string */
     const CLIENT_NAME = 'DUMMY';
 
+    /** @var int */
+    const CLIENT_ID = 999999;
+
     protected function setUp()
     {
         parent::setUp();
@@ -52,6 +55,12 @@ class SC_Helper_OAuth2Test extends Common_TestCase
     public function testGetOAuth2Client()
     {
         $actual = SC_Helper_OAuth2::getOAuth2Client(self::CLIENT_NAME);
+        $this->assertInstanceOf('OAuth2Client', $actual);
+    }
+
+    public function testGetOAuth2ClientId()
+    {
+        $actual = SC_Helper_OAuth2::getOAuth2ClientById(self::CLIENT_ID);
         $this->assertInstanceOf('OAuth2Client', $actual);
     }
 
@@ -145,46 +154,78 @@ class SC_Helper_OAuth2Test extends Common_TestCase
 
     public function testRegisterUserInfo()
     {
-        $customer_id = $this->objGenerator->createCustomer();
-        $arrCustomer = $this->objQuery->getRow('*', 'dtb_customer', 'del_flg = 0 AND status = 2 AND customer_id = ?', [$customer_id]);
+        $objClient = SC_Helper_OAuth2::getOAuth2Client('DUMMY');
         $arrUserInfo = [
-            'oauth2_client_id' => '999999',
-            'customer_id' => $customer_id,
-            'sub' => $this->faker->word,
-            'name' => $arrCustomer['name01'],
-            'email' => $arrCustomer['email']
+            'oauth2_client_id' => $objClient->oauth2_client_id,
+            'customer_id' => $this->faker->randomNumber(),
+            'sub' => $this->faker->uuid,
+            'name' => $this->faker->name,
+            'email' => $this->faker->safeEmail,
+            'postal_code' => $this->faker->postcode
         ];
-        $this->actual = SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
-        $this->expected = $arrUserInfo;
-        foreach (array_keys($arrUserInfo) as $key) {
-            $this->assertEquals($this->expected[$key], $this->actual[$key]);
-        }
 
-        $arrAddress = $this->objQuery->getRow('*', 'dtb_oauth2_openid_userinfo_address', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
-        $this->assertEquals($arrUserInfo['oauth2_client_id'], $arrAddress['oauth2_client_id']);
+        $actual = SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
+        $this->assertNotNull($actual['updated_at']);
+        foreach (['oauth2_client_id', 'customer_id', 'sub', 'name', 'email'] as $claim) {
+            $this->assertEquals($arrUserInfo[$claim], $actual[$claim]);
+        }
+        $this->assertEquals($arrUserInfo['postal_code'], $actual['address']['postal_code']);
     }
 
-    public function testRegisterUserInfoWithAmazon()
+    public function testRegisterToken()
     {
-        $customer_id = $this->objGenerator->createCustomer();
-        $arrCustomer = $this->objQuery->getRow('*', 'dtb_customer', 'del_flg = 0 AND status = 2 AND customer_id = ?', [$customer_id]);
-        $arrUserInfo = [
-            'oauth2_client_id' => '999999',
-            'customer_id' => $customer_id,
-            'sub' => $this->faker->word,
-            'name' => $arrCustomer['name01'],
-            'email' => $arrCustomer['email'],
-            'postal_code' => '4440426' // for amazon
+        $objClient = SC_Helper_OAuth2::getOAuth2Client('DUMMY');
+        $arrToken = [
+            'oauth2_client_id' => $objClient->oauth2_client_id,
+            'customer_id' => $this->faker->randomNumber(),
+            'access_token' => $this->faker->uuid,
+            'refresh_token' => $this->faker->uuid,
+            'token_type' => 'Bearer',
+            'expires_in' => $this->faker->unixTime(),
+            'create_date' => 'CURRENT_TIMESTAMP',
+            'update_date' => 'CURRENT_TIMESTAMP',
+            'scope' => 'profile openid'
         ];
-        $this->actual = SC_Helper_OAuth2::registerUserInfo($arrUserInfo);
-        $this->expected = $arrUserInfo;
-        foreach (array_keys($arrUserInfo) as $key) {
-            $this->assertEquals($this->expected[$key], $this->actual[$key]);
-        }
+        $actual = SC_Helper_OAuth2::registerToken($arrToken);
+        $this->assertNotNull($actual->access_token);
+    }
 
-        $arrAddress = $this->objQuery->getRow('*', 'dtb_oauth2_openid_userinfo_address', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
-        var_dump($arrAddress);
-        $this->assertEquals($arrUserInfo['oauth2_client_id'], $arrAddress['oauth2_client_id']);
-        $this->assertEquals('4440426', $arrAddress['postal_code']);
+    public function testRefreshToken()
+    {
+        $access_token = json_encode(
+            [
+                'access_token' => 'token',
+                'refresh_token' => 'refresh',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+                'scope' => $this->objClient->scope
+            ]);
+        $mock = new GuzzleHttp\Handler\MockHandler([
+            new GuzzleHttp\Psr7\Response(200, ['Content-Type' => 'application/json'], $access_token)
+        ]);
+        $handler = GuzzleHttp\HandlerStack::create($mock);
+        $mockClient = new GuzzleHttp\Client(['handler' => $handler]);
+
+        $expected = json_decode($access_token, true);
+        $actual = SC_Helper_OAuth2::refreshAccessToken($mockClient, $this->objClient, 'refresh_token');
+        $this->assertEquals($expected, $actual);
+    }
+
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessageRegExp /invalid_grant/
+     */
+    public function testRefreshTokenWithFailure()
+    {
+        $mock = new GuzzleHttp\Handler\MockHandler([
+            new GuzzleHttp\Psr7\Response(
+                400, ['Content-Type' => 'application/json'],
+                json_encode(['error' => 'invalid_grant', 'error_description' => 'invalid']))
+        ]);
+        $handler = GuzzleHttp\HandlerStack::create($mock);
+        $mockClient = new GuzzleHttp\Client(['handler' => $handler]);
+
+        $actual = SC_Helper_OAuth2::refreshAccessToken($mockClient, $this->objClient, 'refresh_token');
+        $this->assertNotNull($actual); // 例外がスローされるため到達しないはず
     }
 }

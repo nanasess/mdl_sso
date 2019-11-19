@@ -19,6 +19,22 @@ class SC_Helper_OAuth2
     }
 
     /**
+     * IDを使用して OAuth2Client を取得します.
+     *
+     * @param int $id
+     * @return OAuth2Client
+     */
+    public static function getOAuth2ClientById($id)
+    {
+        $objQuery = SC_Query_Ex::getSingletonInstance();
+        $arrClient = $objQuery->getRow('*', 'dtb_oauth2_client', 'oauth2_client_id = ?', [$id]);
+        if (SC_Utils_Ex::isBlank($arrClient)) {
+            trigger_error('OAuth2.0 Client not found', E_USER_ERROR);
+        }
+        return new OAuth2Client($arrClient);
+    }
+
+    /**
      * 略称の妥当性を検証します.
      *
      * @param string $short_name
@@ -117,6 +133,44 @@ class SC_Helper_OAuth2
     }
 
     /**
+     * Access token を更新する.
+     *
+     * @param GuzzleHttp\Client $httpClient
+     * @param OAuth2Client $objClient
+     * @param string $refresh_token
+     * @return array
+     */
+    public static function refreshAccessToken(GuzzleHttp\Client $httpClient, OAuth2Client $objClient, $refresh_token)
+    {
+        $params = [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refresh_token,
+            'client_id' => $objClient->client_id,
+            'client_secret' => $objClient->client_secret
+        ];
+
+        try {
+            $headers = [];
+
+            GC_Utils_Ex::gfPrintLog($objClient->token_endpoint.' にPOSTします '.var_export($headers, true).var_export($params, true));
+            $response = $httpClient->request(
+                'POST',
+                $objClient->token_endpoint,
+                [
+                    'headers' => $headers,
+                    'json' => $params,
+                    'timeout' => 5,
+                    'connect_timeout' => 5
+                ]
+            );
+
+            return json_decode($response->getBody(), true);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
      * UserInfo を取得する.
      *
      * @param GuzzleHttp\Client $httpClient
@@ -167,8 +221,23 @@ class SC_Helper_OAuth2
         }
 
     }
+
     public static function registerToken(array $arrToken)
     {
+        $objQuery = SC_Query_Ex::getSingletonInstance();
+        $arrExistToken = $objQuery->getRow('*', 'dtb_oauth2_token', 'oauth2_client_id = ? AND customer_id = ?', [$arrToken['oauth2_client_id'], $arrToken['customer_id']]);
+        $arrToken['update_date'] = 'CURRENT_TIMESTAMP';
+        if (SC_Utils_Ex::isBlank($arrExistToken)) {
+            $arrToken['create_date'] = 'CURRENT_TIMESTAMP';
+            $objQuery->insert('dtb_oauth2_token', $objQuery->extractOnlyColsOf('dtb_oauth2_token', $arrToken));
+        } else {
+            $objQuery->update(
+                'dtb_oauth2_token',
+                $objQuery->extractOnlyColsOf('dtb_oauth2_token', $arrToken),
+                'oauth2_client_id = ? AND customer_id = ?', [$arrToken['oauth2_client_id'], $arrToken['customer_id']]
+            );
+        }
+        return self::getStoredToken($arrToken['oauth2_client_id'], $arrToken['customer_id']);
     }
 
     /**
@@ -182,32 +251,55 @@ class SC_Helper_OAuth2
     public static function registerUserInfo(array $arrUserInfo)
     {
         $objQuery = SC_Query_Ex::getSingletonInstance();
-        $hasCustomer = $objQuery->exists('dtb_customer', 'del_flg = 0 AND status = 2 AND customer_id = ?', [$arrUserInfo['customer_id']]);
-        if (!$hasCustomer) {
-            throw new Exception('Customer not found');
-        }
-        $hasUserInfo = $objQuery->exists('dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?',
-                                         [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
-        if ($hasUserInfo) {
-            $objQuery->update('dtb_oauth2_openid_userinfo', ['update_at' => 'CURRENT_TIMESTAMP'], 'oauth2_client_id = ? AND customer_id = ?',
-                                                           [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
-            return $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?',
-                                     [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        $arrExistUserInfo = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        $arrUserInfo['updated_at'] = 'CURRENT_TIMESTAMP';
+        if (!array_key_exists('address', $arrUserInfo)) {
+            $arrUserInfo['address'] = [];
+            if (isset($arrUserInfo['postal_code'])) {
+                $arrUserInfo['address']['postal_code'] = $arrUserInfo['postal_code'];
+
+            }
         }
 
-        $objQuery->insert('dtb_oauth2_openid_userinfo', $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo', $arrUserInfo));
-        $arrUserInfoAddress = [
-            'oauth2_client_id' => $arrUserInfo['oauth2_client_id'],
-            'customer_id' => $arrUserInfo['customer_id'],
-        ];
-        // for Login with Amazon
-        if (array_key_exists('postal_code', $arrUserInfo)) {
-            $arrUserInfoAddress['postal_code'] = $arrUserInfo['postal_code'];
+        if (SC_Utils_Ex::isBlank($arrExistUserInfo)) {
+            $objQuery->insert('dtb_oauth2_openid_userinfo', $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo', $arrUserInfo));
+            $objQuery->insert('dtb_oauth2_openid_userinfo_address',
+                              [
+                                  'oauth2_client_id' => $arrUserInfo['oauth2_client_id'],
+                                  'customer_id' => $arrUserInfo['customer_id'],
+                                  'postal_code' => $arrUserInfo['address']['postal_code'] // TODO
+                              ]
+            );
+        } else {
+            $objQuery->update(
+                'dtb_oauth2_openid_userinfo',
+                $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo', $arrUserInfo),
+                'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]
+            );
+            $objQuery->update(
+                'dtb_oauth2_openid_userinfo_address',
+                $objQuery->extractOnlyColsOf('dtb_oauth2_openid_userinfo_address', $arrUserInfo['address']),
+                'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]
+            );
+        }
+        $result = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        $result['address'] = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo_address', 'oauth2_client_id = ? AND customer_id = ?', [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        return $result;
+    }
+
+    /**
+     * @param int $oauth2_client_id
+     * @param int $customer_id
+     * @return AccessToken|null
+     */
+    public static function getStoredToken($oauth2_client_id, $customer_id)
+    {
+        $objQuery = SC_Query_Ex::getSingletonInstance();
+        $token = $objQuery->getRow('*', 'dtb_oauth2_token', 'oauth2_client_id = ? AND customer_id = ?', [$oauth2_client_id, $customer_id]);
+        if ($token) {
+            return new AccessToken($token);
         }
 
-        $objQuery->insert('dtb_oauth2_openid_userinfo_address', $arrUserInfoAddress);
-
-        return $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND customer_id = ?',
-                                 [$arrUserInfo['oauth2_client_id'], $arrUserInfo['customer_id']]);
+        return null;
     }
 }

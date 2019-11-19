@@ -2,6 +2,27 @@
 
 class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 {
+    /** @var string[] */
+    public $arrPref;
+    /** @var string[] */
+    public $arrJob;
+    /** @var string[] */
+    public $arrReminder;
+    /** @var string[] */
+    public $arrCountry;
+    /** @var string[] */
+    public $arrSex;
+    /** @var string[] */
+    public $arrMAILMAGATYPE;
+    /** @var int[] */
+    public $arrYear;
+    /** @var int[] */
+    public $arrMonth;
+    /** @var int[] */
+    public $arrDay;
+    /** @var int */
+    public $max;
+
     /**
      * Page を初期化する.
      *
@@ -26,7 +47,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
         // 生年月日選択肢の取得
         $objDate            = new SC_Date_Ex(BIRTH_YEAR, date('Y'));
-        $this->arrYear      = $objDate->getYear('', START_BIRTH_YEAR, '');
+        $this->arrYear      = $objDate->getYear('', '1980', '');
         $this->arrMonth     = $objDate->getMonth(true);
         $this->arrDay       = $objDate->getDay(true);
 
@@ -61,10 +82,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
 
         switch ($this->getMode()) {
             case 'confirm':
-                $objFormParam->setValue('password', $password);
-                $objFormParam->setValue('password02', $password);
-                $objFormParam->setValue('reminder', 1);
-                $objFormParam->setValue('reminder_answer', $password);
+                $this->setDummyFormParamTo($objFormParam);
                 $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
 
                 // 入力エラーなし
@@ -73,29 +91,12 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                 }
                 break;
             case 'complete':
-                $objFormParam->setValue('name01', $_SESSION['userinfo']['name']);
-                $objFormParam->setValue('email', $_SESSION['userinfo']['email']);
-                $objFormParam->setValue('email02', $_SESSION['userinfo']['email']);
-                if (array_key_exists('postal_code', $_SESSION['userinfo']) && isset($_SESSION['userinfo']['postal_code'])) {
-                    $zipcode = preg_replace('/[^0-9]/', '', $_SESSION['userinfo']['postal_code']);
-                    $zip01 = substr($zipcode, 0, 3);
-                    $zip02 = substr($zipcode, 3);
-                    $objFormParam->setValue('zip01', $zip01);
-                    $objFormParam->setValue('zip02', $zip02);
-                    $arrAddress = SC_Helper_OAuth2::getAddressByZipcode($this->httpClient, $zip01, $zip02);
-                    if (!empty($arrAddress)) {
-                        $objFormParam->setValue('pref', $arrAddress['pref_id']);
-                        $objFormParam->setValue('addr01', $arrAddress['addr01']);
-                        $objFormParam->setValue('addr02', $arrAddress['addr02']);
-                    }
-                }
-                $objFormParam->setValue('password', $password);
-                $objFormParam->setValue('password02', $password);
-                $objFormParam->setValue('reminder', 1);
-                $objFormParam->setValue('reminder_answer', $password);
+                $this->setDummyFormParamTo($objFormParam, true);
 
-                // $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
-                if (!empty($_SESSION['userinfo'])) {
+                $this->arrErr = SC_Helper_Customer_Ex::sfCustomerEntryErrorCheck($objFormParam);
+                if (empty($this->arrErr)) {
+                    $this->setDummyFormCompleteParamTo($objFormParam);
+
                     $customer_id = SC_Helper_Customer_Ex::sfEditCustomerData($this->lfMakeSqlVal($objFormParam));
 
                     $this->lfSendMail($customer_id, $objFormParam->getHashArray());
@@ -103,20 +104,21 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
                     // ログイン状態にする
                     $objCustomer = new SC_Customer_Ex();
                     $objCustomer->setLogin($objFormParam->getValue('email'));
+                    $objCustomer->setOAuth2ClientId($_SESSION['token']['oauth2_client_id']);
 
+                    $_SESSION['registered_customer_id'] = $customer_id;
                     $_SESSION['userinfo']['customer_id'] = $customer_id;
-                    SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
-                    SC_Helper_OAuth2::registerToken($_SESSION['userinfo']);
-                    unset($_SESSION['userinfo']);
-                    unset($_SESSION['token']);
+                    $_SESSION['token']['customer_id'] = $customer_id;
+                    $userInfo = SC_Helper_OAuth2::registerUserInfo($_SESSION['userinfo']);
+                    SC_Helper_OAuth2::registerToken($_SESSION['token']);
                     // 完了ページに移動させる。
-                    SC_Response_Ex::sendRedirect('/sso/complete');
+                    SC_Response_Ex::sendRedirectFromUrlPath('sso/'.$this->short_name.'/complete');
+                    SC_Response_Ex::actionExit();
                 }
                 break;
             default:
                 $objFormParam->setValue('name01', $_SESSION['userinfo']['name']);
                 $objFormParam->setValue('email', $_SESSION['userinfo']['email']);
-                $objFormParam->setValue('email02', $_SESSION['userinfo']['email']);
         }
 
         $this->arrForm = $objFormParam->getFormParamList();
@@ -163,7 +165,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
      * @access private
      * @return void
      */
-    public function lfSendMail($uniqid, $arrForm)
+    public function lfSendMail($customer_id, $arrForm)
     {
         $CONF           = SC_Helper_DB_Ex::sfGetBasisData();
 
@@ -171,8 +173,7 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $objMailText->setPage($this);
         $objMailText->assign('CONF', $CONF);
         $objMailText->assign('name01', $arrForm['name01']);
-        $objMailText->assign('name02', $arrForm['name02']);
-        $objMailText->assign('uniqid', $uniqid);
+        $objMailText->assign('customer_id', $customer_id);
         $objMailText->assignobj($this);
 
         $objHelperMail  = new SC_Helper_Mail_Ex();
@@ -257,5 +258,66 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $arrResults['point'] = $CONF['welcome_point'];
 
         return $arrResults;
+    }
+
+    /**
+     * @param SC_FormParam_Ex $objFormParam
+     * @param bool $is_complete
+     */
+    protected function setDummyFormParamTo(SC_FormParam_Ex $objFormParam, $is_complete = false)
+    {
+        // スペースが入っている場合があるため, エラーチェック前に除去する
+        $name01 = $objFormParam->getValue('name01');
+        $name01 = str_replace([" ", "　"], '', $name01);
+        // XXX 登録完了時に姓名を分割したいので, 一旦 reminder_answer に入れておく
+        if (!$is_complete) {
+            $objFormParam->setValue('reminder_answer', $objFormParam->getValue('name01'));
+        }
+        $objFormParam->setValue('name01', $name01);
+        $objFormParam->setValue('name02', '名');
+        $objFormParam->setValue('kana01', 'セイ');
+        $objFormParam->setValue('kana02', 'メイ');
+        $objFormParam->setValue('email02', $objFormParam->getValue('email'));
+        $objFormParam->setValue('zip01', '000');
+        $objFormParam->setValue('zip02', '0000');
+        $objFormParam->setValue('pref', '1');
+        $objFormParam->setValue('addr01', '1');
+        $objFormParam->setValue('addr02', '2');
+        $objFormParam->setValue('tel01', '000');
+        $objFormParam->setValue('tel02', '000');
+        $objFormParam->setValue('tel03', '000');
+        $objFormParam->setValue('sex', '0');
+        $objFormParam->setValue('password', 'password123');
+        $objFormParam->setValue('password02', 'password123');
+        $objFormParam->setValue('reminder', 1);
+
+    }
+
+    /**
+     * @param SC_FormParam_Ex $objFormParam
+     */
+    protected function setDummyFormCompleteParamTo(SC_FormParam_Ex $objFormParam)
+    {
+        // スペースが含まれる場合は姓名を分割する
+        $name = $objFormParam->getValue('reminder_answer');
+        list($name01, $name02) = explode(' ',  str_replace("　", ' ', $name));
+        $objFormParam->setValue('name01', $name01);
+        $objFormParam->setValue('name02', $name02);
+        $objFormParam->setValue('kana01', null);
+        $objFormParam->setValue('kana02', null);
+        $objFormParam->setValue('email02', $objFormParam->getValue('email'));
+        $objFormParam->setValue('zip01', null);
+        $objFormParam->setValue('zip02', null);
+        $objFormParam->setValue('pref', 0);
+        $objFormParam->setValue('addr01', null);
+        $objFormParam->setValue('addr02', null);
+        $objFormParam->setValue('tel01', null);
+        $objFormParam->setValue('tel02', null);
+        $objFormParam->setValue('tel03', null);
+        $objFormParam->setValue('sex', 0);
+        $objFormParam->setValue('password', 'password123');
+        $objFormParam->setValue('password02', 'password123');
+        $objFormParam->setValue('reminder', 1);
+        $objFormParam->setValue('reminder_answer', null);
     }
 }
