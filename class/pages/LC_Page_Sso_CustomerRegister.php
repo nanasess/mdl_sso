@@ -52,8 +52,8 @@ class LC_Page_Sso_CustomerRegister extends LC_Page_AbstractSso
         $this->arrDay       = $objDate->getDay(true);
 
         $this->httpCacheControl('nocache');
-        // $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register.tpl'));
-        $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register_kiyaku_only.tpl'));
+        $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register.tpl'));
+        // $this->setTemplate(realpath(__DIR__.'/../../templates/default/sso/register_kiyaku_only.tpl'));
     }
 
     /**
