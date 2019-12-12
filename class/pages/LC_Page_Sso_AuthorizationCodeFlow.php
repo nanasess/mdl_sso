@@ -80,77 +80,15 @@ class LC_Page_Sso_AuthorizationCodeFlow extends LC_Page_AbstractSso
                 //$objQuery->insert('dtb_oauth2_token', $arrToken);
                 // $userInfo = $client->post($arrClient['token_endpoint'], array(), $params)->json();
                 $userInfo = SC_Helper_OAuth2::getUserInfo($this->httpClient, $this->objClient, $token['access_token']);
-                $arrUserInfo = [];
-                switch ($this->short_name) {
-                    case 'AMZN':
-                        $arrUserInfo = [
-                            'sub' => $userInfo['user_id'],
-                            'name' => $userInfo['name'],
-                            'email' => $userInfo['email'],
-                            'postal_code' => $userInfo['postal_code']
-                        ];
-                        break;
-                    case 'FB':
-                        // TODO 書き換えたい https://developers.facebook.com/docs/php/howto/example_facebook_login
-                        $fb = new Facebook\Facebook(
-                            [
-                                'app_id' => $arrClient['client_id'],
-                                'app_secret' => $arrClient['client_secret'],
-                                'default_graph_version' => 'v2.8',
-                            ]
-                        );
-                        $response = $fb->get('/me?fields=id,name,email', $token['access_token']);
-                        $userInfo = $response->getGraphUser();
-
-                        $arrUserInfo = [
-                            'sub' => $userInfo->getId(),
-                            'name' => $userInfo->getName(),
-                            'email' => $userInfo->getEmail()
-                        ];
-                        break;
-                    case 'L':
-                        $arrUserInfo = [
-                            'sub' => $userInfo['userId'],
-                            'name' => $userInfo['displayName'],
-                            'picture' => $userInfo['pictureUrl']
-                        ];
-                        break;
-                    case 'G':
-                        $arrUserInfo = [
-                            'sub' => $userInfo['sub'],
-                            'name' => $userInfo['name'],
-                            'email' => $userInfo['email']
-                        ];
-                        break;
-                    case 'YJ':
-                        $arrUserInfo = [
-                            'sub' => $userInfo['user_id'],
-                            'name' => $userInfo['name'],
-                            'email' => $userInfo['email']
-                        ];
-                        break;
-                    case 'DUMMY': // testing only
-                        $arrUserInfo = [
-                            'sub' => $userInfo['user_id'],
-                            'name' => $userInfo['name'],
-                            'email' => $userInfo['email'],
-                            'postal_code' => $userInfo['postal_code']
-                        ];
-
-                        break;
-                    default:
-                        GC_Utils_Ex::gfPrintLog('SSO not found. '.$this->short_name);
-                        SC_Response_Ex::actionExit();
-                }
+                $arrUserInfo = SC_Helper_OAuth2::normalizeUserInfo($this->objClient, $userInfo);
                 GC_Utils_Ex::gfPrintLog('UserInfo を取得しました '.print_r($arrUserInfo, true));
+
                 $objQuery = SC_Query_Ex::getSingletonInstance();
 
                 GC_Utils_Ex::gfPrintLog('oauth2_client_id: '.$this->objClient->oauth2_client_id.' sub:'.$arrUserInfo['sub']);
                 // $userInfo = $objQuery->getRow('*', 'dtb_oauth2_openid_userinfo', 'oauth2_client_id = ? AND sub = ?',
                 //                               [$this->objClient->oauth2_client_id, $arrUserInfo['sub']]);
                 // GC_Utils_Ex::gfPrintLog(print_r($userInfo, true));
-
-                $arrUserInfo['oauth2_client_id'] = $this->objClient->oauth2_client_id;
                 $arrCustomer = $objQuery->getRow('*', 'dtb_customer',
                                                  'customer_id = (SELECT customer_id FROM dtb_oauth2_openid_userinfo WHERE oauth2_client_id = ? AND sub = ?)',
                                                  [$this->objClient->oauth2_client_id, $arrUserInfo['sub']]);
