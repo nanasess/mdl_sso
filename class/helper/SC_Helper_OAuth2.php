@@ -302,4 +302,82 @@ class SC_Helper_OAuth2
 
         return null;
     }
+
+    /**
+     * 正規化した UserInfo を返します.
+     *
+     * TODO Factoryパターン使う
+     *
+     * @param int $oauth2_client_id
+     * @param array $userInfo
+     * @return array
+     */
+    public static function normalizeUserInfo(OAuth2Client $objClient, array $userInfo)
+    {
+        $arrUserInfo = [];
+        switch ($objClient->short_name) {
+            case 'AMZN':
+                $arrUserInfo = [
+                    'sub' => $userInfo['user_id'],
+                    'name' => $userInfo['name'],
+                    'email' => $userInfo['email'],
+                    'postal_code' => $userInfo['postal_code']
+                ];
+                break;
+            case 'FB':
+                // TODO 書き換えたい https://developers.facebook.com/docs/php/howto/example_facebook_login
+                $fb = new Facebook\Facebook(
+                    [
+                        'app_id' => $arrClient['client_id'],
+                        'app_secret' => $arrClient['client_secret'],
+                        'default_graph_version' => 'v2.8',
+                    ]
+                );
+                $response = $fb->get('/me?fields=id,name,email', $token['access_token']);
+                $userInfo = $response->getGraphUser();
+
+                $arrUserInfo = [
+                    'sub' => $userInfo->getId(),
+                    'name' => $userInfo->getName(),
+                    'email' => $userInfo->getEmail()
+                ];
+                break;
+            case 'L':
+                $arrUserInfo = [
+                    'sub' => $userInfo['userId'],
+                    'name' => $userInfo['displayName'],
+                    'picture' => $userInfo['pictureUrl']
+                ];
+                break;
+            case 'G':
+                $arrUserInfo = [
+                    'sub' => $userInfo['sub'],
+                    'name' => $userInfo['name'],
+                    'email' => $userInfo['email']
+                ];
+                break;
+            case 'YJ':
+                $arrUserInfo = [
+                    'sub' => $userInfo['user_id'],
+                    'name' => $userInfo['name'],
+                    'email' => $userInfo['email']
+                ];
+                break;
+            case 'DUMMY': // testing only
+                $arrUserInfo = [
+                    'sub' => $userInfo['user_id'],
+                    'name' => $userInfo['name'],
+                    'email' => $userInfo['email'],
+                    'postal_code' => $userInfo['postal_code']
+                ];
+
+                break;
+            default:
+                GC_Utils_Ex::gfPrintLog('SSO not found. '.$objClient->short_name);
+                return false;
+        }
+        $arrUserInfo['oauth2_client_id'] = $objClient->oauth2_client_id;
+
+        return $arrUserInfo;
+    }
 }
