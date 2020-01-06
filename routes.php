@@ -80,8 +80,8 @@ return $routes = function (FastRoute\RouteCollector $r) {
                     'postal_code' => $faker->postcode
                 ]);
         });
+        $r->addRoute(['GET'], '/phpinfo', function(array $vars) {
+            phpinfo();
+        });
     }
-    $r->addRoute(['GET'], '/phpinfo', function(array $vars) {
-        phpinfo();
-    });
 };
